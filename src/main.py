@@ -1,60 +1,106 @@
 import os
 import time
-import random  
+import random
+import re
 from dotenv import load_dotenv
 from services.whatsapp_client import enviar_mensagem_whatsapp
 from services.planilha_manager import buscar_devedores
 from services.billing_agent import gerar_mensagem_ia 
 
+# CONFIGURAÇÃO DE AMBIENTE
+MODO_PRODUCAO = False 
+
+def limpar_numero(numero):
+    """Remove caracteres não numéricos e garante o DDI 55."""
+    apenas_numeros = re.sub(r'\D', '', str(numero))
+    if not apenas_numeros.startswith('55'):
+        apenas_numeros = '55' + apenas_numeros
+    return apenas_numeros
+
 def main():
     load_dotenv()
     
-    # MODO DE SEGURANÇA (ADMIN)
     MEU_NUMERO_TESTE = os.getenv("MY_PHONE_NUMBER") 
     
-    print("🤖 --- ROBÔ DO INSTITUTO REIS (IA + HUMAN DELAY) ---")
-    print("🛡️ Modo: Seguro (Variação de Texto e Pausa Aleatória)")
+    print("--- INICIANDO PROCESSAMENTO DE NOTIFICAÇÕES ---")
+    print(f"Modo de Execução: {'PRODUÇÃO (DADOS REAIS)' if MODO_PRODUCAO else 'HOMOLOGAÇÃO (TESTE)'}")
     print("-" * 50)
 
-    # 1. Busca na Planilha
-    lista_devedores = buscar_devedores()
+    alunos_para_notificar = buscar_devedores()
 
-    if not lista_devedores:
-        print("✅ Ninguém na lista de envio hoje.")
+    if not alunos_para_notificar:
+        print("Nenhum aluno atende aos critérios de notificação hoje.")
         return
 
-    print(f"🎯 Encontrados {len(lista_devedores)} alunos para contato.")
+    print(f"Total de notificações agendadas: {len(alunos_para_notificar)}")
 
-    # 2. Processamento
-    for i, aluno in enumerate(lista_devedores):
-        nome = aluno["nome"]
-        dias_atraso = aluno["dias_atraso"]
+    for i, aluno in enumerate(alunos_para_notificar):
+        nome_completo = aluno["nome"]
+        dias_atraso = aluno["dias_atraso"] 
+        telefone_aluno = limpar_numero(aluno["telefone"])
         
-        print(f"\n🔍 [{i+1}/{len(lista_devedores)}] Gerando texto para: {nome} (Status: {dias_atraso}d)")
+        numero_destino = telefone_aluno if MODO_PRODUCAO else MEU_NUMERO_TESTE
 
-        # A. IA Escreve (Cada vez sai diferente)
-        mensagem = gerar_mensagem_ia(nome, dias_atraso)
-        print(f"📝 Texto IA: '{mensagem}'")
+        print(f"\n[{i+1}/{len(alunos_para_notificar)}] Processando: {nome_completo}")
 
-        # B. Envio Seguro
-        print(f"🚀 Enviando para ADMIN ({MEU_NUMERO_TESTE})...")
+        decisao_ia = gerar_mensagem_ia(nome_completo, dias_atraso)
         
-        # TRAVA: Manda sempre para você enquanto testamos
-        sucesso = enviar_mensagem_whatsapp(MEU_NUMERO_TESTE, mensagem)
+        try:
+            # Tenta extrair os dados se a IA respondeu no padrão correto
+            template_name = ""
+            primeiro_nome = nome_completo.split()[0].title()
+            
+            if "TEMPLATE:" in decisao_ia:
+                linhas = decisao_ia.strip().split('\n')
+                template_name = linhas[0].split(':')[1].strip()
+                # Tenta pegar o nome da IA, se falhar usa o que cortamos acima
+                try:
+                    primeiro_nome = linhas[1].split(':')[1].strip()
+                except IndexError:
+                    pass
 
-        if sucesso:
-            print("✅ Enviado com sucesso.")
-        else:
-            print("❌ Falha no envio.")
+            # FALLBACK DE FERRO: Se a IA falhou, devolveu erro ou o modelo caiu, o código resolve sozinho
+            if not template_name or "aviso_vencimento" not in template_name:
+                print("⚠️ Retorno da IA falhou, aplicando template por regra matemática de segurança...")
+                if dias_atraso == -5:
+                    template_name = "aviso_vencimento_d5"
+                elif dias_atraso == -1:
+                    template_name = "aviso_vencimento_d1"
+                else:
+                    template_name = "aviso_vencimento_hoje"
+            
+            # Ajuste das variáveis conforme a exigência de cada Template na Meta
+            if template_name == "aviso_vencimento_hoje":
+                chave_pix = os.getenv("CHAVE_PIX", "financeiro@institutoreis.com.br")
+                parametros_envio = [primeiro_nome, chave_pix]
+            else:
+                parametros_envio = [primeiro_nome]
+            
+            print(f"Template selecionado: {template_name}")
+            print(f"Enviando para: {numero_destino}...")
+            
+            sucesso = enviar_mensagem_whatsapp(
+                numero_destino=numero_destino, 
+                template_name=template_name, 
+                parametros=parametros_envio
+            )
 
-        # C. DELAY HUMANO (Aleatório entre 20 e 40 segundos)
-        # Isso evita que o WhatsApp detecte padrão de robô
-        tempo_espera = random.randint(20, 40)
-        print(f"⏳ Comportamento Humano: Aguardando {tempo_espera} segundos...")
-        time.sleep(tempo_espera)
+            if sucesso:
+                print("Status: Mensagem enviada com sucesso.")
+            else:
+                print("Status: Falha ao enviar mensagem pela Cloud API.")
+
+        except Exception as e:
+            print(f"Erro no processamento dos dados do aluno {nome_completo}. Detalhes: {e}")
+
+        # Delay entre requisições
+        if i < len(alunos_para_notificar) - 1:
+            tempo_espera = random.randint(15, 30)
+            print(f"Aguardando {tempo_espera}s para a próxima requisição...")
+            time.sleep(tempo_espera)
 
     print("-" * 50)
-    print("🏁 FIM DO PROCESSAMENTO")
+    print("PROCESSAMENTO FINALIZADO.")
 
 if __name__ == "__main__":
     main()

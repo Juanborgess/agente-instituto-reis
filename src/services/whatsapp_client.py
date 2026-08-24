@@ -4,45 +4,58 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def enviar_mensagem_whatsapp(numero_destino, texto_mensagem):
+def enviar_mensagem_whatsapp(numero_destino, template_name, parametros=None):
     """
-    Envia mensagem usando a Evolution API hospedada na Hostinger.
+    Envia mensagem de template usando a API Oficial da Meta (Cloud API).
     """
-    base_url = os.getenv("EVOLUTION_API_URL")
-    api_key = os.getenv("EVOLUTION_API_KEY")
-    instancia = os.getenv("EVOLUTION_INSTANCE")
+    token = os.getenv("WHATSAPP_TOKEN")
+    phone_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
     
-    # Validação de segurança
-    if not all([base_url, api_key, instancia]):
-        print("❌ ERRO: Faltam variáveis da Evolution API no .env!")
+    if not all([token, phone_id]):
+        print("ERRO: Variáveis de ambiente da Meta API (TOKEN ou PHONE_ID) não configuradas no .env.")
         return False
 
-    url = f"{base_url}/message/sendText/{instancia}"
+    # Endpoint oficial da Graph API
+    url = f"https://graph.facebook.com/v22.0/{phone_id}/messages"
     
     headers = {
-        "apikey": api_key,
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
+
+    # Estruturação dos componentes dinâmicos (variáveis do template)
+    components = []
+    if parametros:
+        components.append({
+            "type": "body",
+            "parameters": [{"type": "text", "text": str(p)} for p in parametros]
+        })
+
     payload = {
-        "number": numero_destino,
-        "options": {
-            "delay": 1200, # Fica "digitando..." por 1.2 segundos
-            "presence": "composing"
-        },
-        "textMessage": {
-            "text": texto_mensagem
+        "messaging_product": "whatsapp",
+        "to": numero_destino,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {"code": "pt_BR"},
+            "components": components
         }
     }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        # Adicionado timeout por segurança para não travar a automação
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        
         if response.status_code in [200, 201]:
-            print(f"✅ Enviado para {numero_destino} (Evolution API)!")
+            print(f"SUCESSO: Template '{template_name}' enviado para {numero_destino}.")
             return True
         else:
-            print(f"❌ Erro da API: {response.text}")
+            print(f"ERRO META API [{response.status_code}]: {response.text}")
             return False
+            
+    except requests.exceptions.Timeout:
+        print("FALHA DE CONEXÃO: Tempo de resposta da Meta esgotado.")
+        return False
     except Exception as e:
-        print(f"🚨 Falha de conexão com a VPS: {e}")
+        print(f"FALHA DE CONEXÃO: Não foi possível comunicar com a Meta. Detalhes: {e}")
         return False

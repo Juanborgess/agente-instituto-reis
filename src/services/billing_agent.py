@@ -5,48 +5,47 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configuração do Modelo (Llama 3 via Groq)
+def carregar_prompt():
+    # Garante a resolução correta do caminho relativo ao arquivo atual
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    caminho_prompt = os.path.join(base_dir, "prompts", "regras_cobranca.md")
+    
+    # Fallback se o prompt estiver direto em src/prompts/
+    if not os.path.exists(caminho_prompt):
+        caminho_prompt = os.path.join(os.getcwd(), "src", "prompts", "regras_cobranca.md")
+        
+    try:
+        with open(caminho_prompt, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        print(f"Erro ao ler arquivo de prompt: {e}")
+        return "Responda apenas no formato TEMPLATE: [nome] e ALUNO: [nome]"
+
 agent = Agent(
-    model=Groq(id="llama-3.3-70b-versatile"),
-    description="Você é a assistente virtual do setor financeiro do Instituto Reis.",
-    instructions=[
-        "Seu objetivo é criar mensagens curtas e educadas de lembrete de mensalidade.",
-        "TOM DE VOZ: Profissional, Institucional, Cordial e Direto.",
-        "PROIBIDO: Não use gírias como 'Tmj', 'Fala aí', 'Beleza'.",
-        "PROIBIDO: Não cobre de forma agressiva. Use palavras como 'regularização', 'pendência'.",
-        "VARIEDADE: Sempre mude ligeiramente a frase para não parecer um robô repetitivo.",
-        "IMPORTANTE: A mensagem deve caber em uma notificação de celular (máximo 2 frases).",
-        "Se o atraso for negativo (ex: -5), é um lembrete antecipado. Não fale em dívida.",
-        "Se o atraso for 0, é dia de vencimento.",
-        "OBRIGATÓRIO: O texto DEVE obrigatoriamente terminar com a seguinte frase e link, pulando uma linha antes: '\n\nPara enviar o comprovante ou tirar dúvidas, fale com o financeiro: wa.me/5521966666335'"
-    ]
+    model=Groq(id="openai/gpt-oss-120b", temperature=0.1),
+    description="Você é o Cérebro de Decisão Financeira do Instituto Reis.",
+    instructions=[carregar_prompt()]
 )
 
 def gerar_mensagem_ia(nome, dias_atraso):
     """
-    Gera uma mensagem única usando IA baseada no status do aluno.
+    Analisa os dados e retorna apenas o Comando de Template para a Meta.
     """
     try:
-        # Define o contexto para a IA saber o que escrever
-        if dias_atraso > 0:
-            contexto = f"O aluno {nome} está com a mensalidade atrasada há {dias_atraso} dias. Crie uma mensagem cordial perguntando sobre a regularização."
-        elif dias_atraso == 0:
-            contexto = f"Hoje é o dia do vencimento da mensalidade do aluno {nome}. Crie um lembrete amigável."
-        elif dias_atraso == -1:
-            contexto = f"A mensalidade do aluno {nome} vence amanhã. Crie um aviso prévio para ele se programar."
-        elif dias_atraso <= -2:
-            dias_para_vencer = abs(dias_atraso)
-            contexto = f"A mensalidade do aluno {nome} vence em {dias_para_vencer} dias. Apenas um lembrete de organização."
-        else:
-            return "Erro: Data inválida."
-
-        # Pede para a IA gerar
-        response = agent.run(contexto)
+        contexto = f"ALUNO: {nome} | DIAS DE ATRASO: {dias_atraso}"
         
-        # O Agno retorna um objeto, pegamos apenas o texto (content)
+        response = agent.run(contexto)
         return response.content
 
     except Exception as e:
-        print(f"⚠️ Erro na IA (usando backup): {e}")
-        # Fallback (Plano B) caso a IA falhe ou a internet caia
-        return f"Olá {nome}, contato do financeiro Instituto Reis sobre sua mensalidade. Poderia nos responder?"
+        print(f"⚠️ Falha na IA, acionando fallback determinístico: {e}")
+        
+        # Fallback de segurança com os nomes exatos aprovados na Meta
+        primeiro_nome = nome.split()[0].title() if nome else "Aluno"
+        
+        if dias_atraso == -5:
+            return f"TEMPLATE: aviso_vencimento_d5\nALUNO: {primeiro_nome}"
+        elif dias_atraso == -1:
+            return f"TEMPLATE: aviso_vencimento_d1\nALUNO: {primeiro_nome}"
+        else:
+            return f"TEMPLATE: aviso_vencimento_hoje\nALUNO: {primeiro_nome}"
