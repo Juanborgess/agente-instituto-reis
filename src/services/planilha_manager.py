@@ -33,7 +33,8 @@ def conectar_planilha():
             print("ERRO: GOOGLE_SHEET_ID não definido no arquivo .env")
             return None
 
-        sheet = client.open_by_key(SPREADSHEET_ID).sheet1
+        ABA_COBRANCA = "Cobranca_Alunos"
+        sheet = client.open_by_key(SPREADSHEET_ID).worksheet(ABA_COBRANCA)
         return sheet
     except Exception as e:
         print(f"Erro na conexão com o Google Sheets: {e}")

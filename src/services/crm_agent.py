@@ -9,6 +9,7 @@ RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
 load_dotenv(RAIZ_PROJETO / ".env")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+ARQUIVO_PROMPT = RAIZ_PROJETO / "src" / "prompts" / "regras_vendas.md"
 
 def sanitizar_primeiro_nome(nome_completo: str) -> str:
     """Extrai apenas o primeiro nome e formata com inicial maiúscula."""
@@ -27,6 +28,22 @@ def parse_data_entrada(data_str: str) -> date | None:
         except ValueError:
             pass
     return None
+
+def obter_prompt_sistema() -> str:
+    """Lê o prompt do arquivo regras_vendas.md com fallback de segurança."""
+    if ARQUIVO_PROMPT.exists():
+        try:
+            return ARQUIVO_PROMPT.read_text(encoding="utf-8")
+        except Exception:
+            pass
+    
+    # Fallback caso o arquivo não seja encontrado ou ocorra erro de leitura
+    return (
+        "Você é o assistente decisor do CRM do Instituto Reis. Responda ESTRITAMENTE neste formato de 3 linhas:\n"
+        "TEMPLATE: [resgate_ficha_d1 | aviso_reserva_d4 | encerramento_ficha_d7 | NENHUM]\n"
+        "NOME: [Primeiro Nome com inicial maiúscula]\n"
+        "CURSO: [Nome do Curso formatado]"
+    )
 
 def calcular_decisao_deterministica(data_entrada_str: str, fase_atual: str, nome_bruto: str, curso_bruto: str) -> dict:
     """
@@ -72,8 +89,8 @@ def calcular_decisao_deterministica(data_entrada_str: str, fase_atual: str, nome
 
 def avaliar_lead_crm(lead: dict) -> dict:
     """
-    Avalia o lead. Tenta a IA (Groq) como camada consultiva rápida;
-    se houver erro, ativa o Fallback Determinístico imediatamente.
+    Avalia o lead. Tenta a IA (Groq) com o prompt externo do arquivo;
+    se houver erro ou lentidão, ativa o Fallback Determinístico imediatamente.
     """
     data_entrada = lead.get("Data_Entrada", "")
     fase_atual = lead.get("Fase_Cadencia", "")
@@ -89,12 +106,7 @@ def avaliar_lead_crm(lead: dict) -> dict:
         "Content-Type": "application/json"
     }
 
-    prompt_sistema = (
-        "Você é o assistente decisor do CRM do Instituto Reis. Responda ESTRITAMENTE neste formato de 3 linhas:\n"
-        "TEMPLATE: [resgate_ficha_d1 | aviso_reserva_d4 | encerramento_ficha_d7 | NENHUM]\n"
-        "NOME: [Primeiro Nome com inicial maiúscula]\n"
-        "CURSO: [Nome do Curso formatado]"
-    )
+    prompt_sistema = obter_prompt_sistema()
 
     prompt_lead = (
         f"Data_Entrada: {data_entrada}\n"
