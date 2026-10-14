@@ -8,7 +8,7 @@ from services.planilha_manager import buscar_devedores
 from services.billing_agent import gerar_mensagem_ia 
 
 # CONFIGURAÇÃO DE AMBIENTE
-MODO_PRODUCAO = False 
+MODO_PRODUCAO = True
 
 def limpar_numero(numero):
     """Remove caracteres não numéricos e garante o DDI 55."""
