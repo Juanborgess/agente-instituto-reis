@@ -55,7 +55,7 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
 
     try {
       const { data, error } = await supabase
-        .table('leads_crm')
+        .from('leads_crm')
         .insert([{
           nome_lead: nome.trim(),
           telefone: telFormatado,

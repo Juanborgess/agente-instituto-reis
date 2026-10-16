@@ -17,7 +17,7 @@ export default function CobrancaView() {
     setLoading(true)
     try {
       const { data, error } = await supabase
-        .table('alunos_cobranca')
+        .from('alunos_cobranca')
         .select('*')
         .order('vencimento_atual', { ascending: true, nullsFirst: false })
 
@@ -58,7 +58,7 @@ export default function CobrancaView() {
     setProcessandoId(aluno.id)
     try {
       const { error } = await supabase
-        .table('alunos_cobranca')
+        .from('alunos_cobranca')
         .update({ 
           status_pagamento: 'CONCLUÍDO',
           updated_at: new Date().toISOString()

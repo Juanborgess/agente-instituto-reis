@@ -19,7 +19,7 @@ export default function CRMView() {
     setLoading(true)
     try {
       const { data, error } = await supabase
-        .table('leads_crm')
+        .from('leads_crm')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -47,7 +47,7 @@ export default function CRMView() {
     setProcessandoId(leadId)
     try {
       const { error } = await supabase
-        .table('leads_crm')
+        .from('leads_crm')
         .update({ 
           status_funil: novoStatus,
           updated_at: new Date().toISOString()
