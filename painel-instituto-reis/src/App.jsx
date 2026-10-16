@@ -35,8 +35,8 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 flex items-center justify-center shadow-glow mb-4 animate-pulse">
-          <span className="text-white font-black text-lg tracking-wider">IR</span>
+        <div className="w-16 h-16 rounded-full bg-white p-1 shadow-2xl ring-4 ring-white/10 mb-4 animate-pulse overflow-hidden flex items-center justify-center">
+          <img src="/logo-instituto.png" alt="Instituto Reis" className="w-full h-full object-contain rounded-full" />
         </div>
         <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
       </div>

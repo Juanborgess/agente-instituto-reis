@@ -46,8 +46,12 @@ export default function LoginView({ onLoginSuccess }) {
         <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/10 backdrop-blur-2xl">
           {/* Header & Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 shadow-glow mb-4">
-              <span className="text-2xl font-black tracking-wider text-white">IR</span>
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white p-1.5 shadow-2xl ring-4 ring-white/10 ring-offset-4 ring-offset-slate-900 mb-4 transition-transform duration-300 hover:scale-105">
+              <img 
+                src="/logo-instituto.png" 
+                alt="Instituto Reis" 
+                className="w-full h-full object-contain rounded-full"
+              />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Instituto Reis

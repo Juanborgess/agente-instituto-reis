@@ -9,8 +9,12 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo e Nome */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 flex items-center justify-center shadow-glow flex-shrink-0">
-              <span className="text-white font-extrabold text-sm tracking-wider">IR</span>
+            <div className="w-10 h-10 rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <img 
+                src="/logo-instituto.png" 
+                alt="Instituto Reis" 
+                className="w-full h-full object-contain rounded-full" 
+              />
             </div>
             <div>
               <div className="font-extrabold text-white text-base tracking-tight flex items-center gap-2">
