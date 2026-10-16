@@ -73,8 +73,8 @@ def processar_cadencia_vendas():
             # Em produção, o ideal é capturar o ID real retornado pela requisição na Meta.
             # Aqui simulamos a gravação de um ID único para registo na coluna H.
             msg_id = f"ID_META_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            atualizar_status_lead(linha_planilha=linha_idx, fase=nova_fase, msg_id=msg_id)
-            print(f"✅ Disparo concluído e planilha atualizada com sucesso.")
+            atualizar_status_lead(linha_planilha=linha_idx, fase=nova_fase, msg_id=msg_id, lead=lead)
+            print(f"✅ Disparo concluído e status atualizado no Supabase e na planilha.")
         else:
             print(f"❌ Falha no envio para o lead da linha {linha_idx}.")
 

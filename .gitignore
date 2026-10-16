@@ -11,5 +11,11 @@ wheels/
 
 # Arquivos de Senhas e Chaves (NUNCA SUBIR)
 .env
+.env.*
 credentials.json
 qrcode.html
+roadmap-nova_função.txt
+
+# Front-end build & dependencies
+painel-instituto-reis/node_modules/
+painel-instituto-reis/dist/

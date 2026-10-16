@@ -10,4 +10,5 @@ dependencies = [
     "gspread>=6.2.1",
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
+    "supabase>=2.32.0",
 ]
