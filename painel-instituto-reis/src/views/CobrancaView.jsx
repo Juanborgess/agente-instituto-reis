@@ -12,6 +12,7 @@ import { marcarPagoNaPlanilha } from '../services/sheetsSync'
 export default function CobrancaView() {
   const [alunos, setAlunos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [recarregando, setRecarregando] = useState(false)
   const [filtroAba, setFiltroAba] = useState('todos')
   const [busca, setBusca] = useState('')
   const [processandoId, setProcessandoId] = useState(null)
@@ -21,8 +22,16 @@ export default function CobrancaView() {
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [alunoParaEditar, setAlunoParaEditar] = useState(null)
 
-  const carregarAlunos = async () => {
-    setLoading(true)
+  const carregarAlunos = async (silencioso = false) => {
+    // Só exibe spinner de tela inteira se a lista estiver completamente vazia e não for silencioso
+    if (!silencioso) {
+      if (alunos.length === 0) {
+        setLoading(true)
+      } else {
+        setRecarregando(true)
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('alunos_cobranca')
@@ -38,24 +47,25 @@ export default function CobrancaView() {
       console.error("Erro ao carregar alunos:", err)
     } finally {
       setLoading(false)
+      setRecarregando(false)
     }
   }
 
   useEffect(() => {
-    carregarAlunos()
+    carregarAlunos(false)
 
-    // Conexão em tempo real com o Supabase (qualquer alteração na planilha que chegue ao Supabase reflete aqui ao vivo)
+    // Conexão em tempo real com o Supabase (100% silenciosa: atualiza dados sem piscar a interface)
     const channel = supabase
       .channel('realtime_alunos_cobranca')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos_cobranca' }, () => {
-        carregarAlunos()
+        carregarAlunos(true)
       })
       .subscribe()
 
-    // Atualização de segurança periódica a cada 20 segundos
+    // Atualização de segurança periódica a cada 30 segundos (100% em background)
     const intervalo = setInterval(() => {
-      carregarAlunos()
-    }, 20000)
+      carregarAlunos(true)
+    }, 30000)
 
     return () => {
       supabase.removeChannel(channel)
@@ -253,12 +263,12 @@ export default function CobrancaView() {
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
-            onClick={carregarAlunos}
-            disabled={loading}
+            onClick={() => carregarAlunos(false)}
+            disabled={loading || recarregando}
             className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer"
             title="Recarregar Dados"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${recarregando || loading ? 'animate-spin' : ''}`} />
           </button>
 
           <button
