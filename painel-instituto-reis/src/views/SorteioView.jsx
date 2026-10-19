@@ -131,7 +131,7 @@ export default function SorteioView() {
   }, [participantes, busca, filtroCurso])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 md:pb-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-32 md:pb-12">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-20 right-4 z-50 glass-panel border border-brand-500/30 bg-slate-900/90 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
@@ -270,7 +270,7 @@ export default function SorteioView() {
         </div>
 
         {/* Input de Busca */}
-        <div className="relative min-w-[260px]">
+        <div className="relative w-full sm:w-auto sm:min-w-[260px]">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"

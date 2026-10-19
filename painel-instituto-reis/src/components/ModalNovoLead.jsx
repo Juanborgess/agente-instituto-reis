@@ -90,7 +90,7 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-lg glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl relative">
+      <div className="w-full max-w-lg glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {/* Botão Fechar */}
         <button
           onClick={onClose}
