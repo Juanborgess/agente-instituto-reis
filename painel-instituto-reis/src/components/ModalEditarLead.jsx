@@ -25,6 +25,7 @@ export default function ModalEditarLead({ lead, isOpen, onClose, onLeadAtualizad
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [curso, setCurso] = useState('Barbeiro')
+  const [customCurso, setCustomCurso] = useState('')
   const [status, setStatus] = useState('Novo')
   const [dataEntrada, setDataEntrada] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,7 +36,16 @@ export default function ModalEditarLead({ lead, isOpen, onClose, onLeadAtualizad
     if (lead) {
       setNome(lead.nome_lead || '')
       setTelefone(formatarTelefoneVisual(lead.telefone || ''))
-      setCurso(lead.curso_interesse || 'Barbeiro')
+      
+      const leadCurso = lead.curso_interesse || 'Barbeiro'
+      if (CURSOS_OFICIAIS.includes(leadCurso)) {
+        setCurso(leadCurso)
+        setCustomCurso('')
+      } else {
+        setCurso('__OUTRO__')
+        setCustomCurso(leadCurso)
+      }
+
       setStatus(lead.status_funil || 'Novo')
       setDataEntrada(lead.data_entrada || '')
       setErro('')
@@ -79,12 +89,19 @@ export default function ModalEditarLead({ lead, isOpen, onClose, onLeadAtualizad
       return
     }
 
+    const cursoFinal = curso === '__OUTRO__' ? customCurso.trim() : curso
+    if (curso === '__OUTRO__' && !cursoFinal) {
+      setErro('Por favor, digite o nome do curso de interesse.')
+      setLoading(false)
+      return
+    }
+
     const telFormatado = numLimpo.startsWith('55') ? numLimpo : '55' + numLimpo
 
     const dadosAtualizados = {
       nome_lead: nome.trim(),
       telefone: telFormatado,
-      curso_interesse: curso,
+      curso_interesse: cursoFinal,
       status_funil: status,
       data_entrada: dataEntrada || new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString()
@@ -238,15 +255,31 @@ export default function ModalEditarLead({ lead, isOpen, onClose, onLeadAtualizad
                 <select
                   value={curso}
                   onChange={(e) => setCurso(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all cursor-pointer"
                 >
                   {CURSOS_OFICIAIS.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white">
                       {c}
                     </option>
                   ))}
+                  <option value="__OUTRO__" className="bg-slate-900 text-brand-400 font-bold">
+                    + Outro Curso (Digitar Novo)...
+                  </option>
                 </select>
               </div>
+
+              {curso === '__OUTRO__' && (
+                <div className="mt-2 animate-fadeIn">
+                  <input
+                    type="text"
+                    required
+                    value={customCurso}
+                    onChange={(e) => setCustomCurso(e.target.value)}
+                    placeholder="Nome do curso de interesse..."
+                    className="w-full px-3.5 py-2 bg-brand-500/10 border border-brand-500/30 rounded-xl text-sm text-brand-200 placeholder-brand-400/50 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Status do Funil */}

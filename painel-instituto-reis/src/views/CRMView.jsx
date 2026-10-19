@@ -2,17 +2,19 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   UserPlus, Search, RefreshCw, MessageCircle, UserCheck, 
-  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight, Trash2, Edit3
+  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight, Trash2, Edit3, Download
 } from 'lucide-react'
 import ModalNovoLead from '../components/ModalNovoLead'
 import ModalEditarLead from '../components/ModalEditarLead'
 import { alterarStatusLeadNaPlanilha, excluirLeadNaPlanilha } from '../services/sheetsSync'
+import { exportarParaCSV } from '../utils/exportCsv'
 
 export default function CRMView() {
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
   const [recarregando, setRecarregando] = useState(false)
   const [filtroStatus, setFiltroStatus] = useState('todos')
+  const [filtroCurso, setFiltroCurso] = useState('todos')
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
   const [leadParaEditar, setLeadParaEditar] = useState(null)
@@ -148,9 +150,22 @@ export default function CRMView() {
     return counts
   }, [leads])
 
+  // Lista dinâmica e única de cursos existentes no CRM
+  const listaCursosDisponiveis = useMemo(() => {
+    const setCursos = new Set()
+    leads.forEach(l => {
+      if (l.curso_interesse && l.curso_interesse.trim()) setCursos.add(l.curso_interesse.trim())
+    })
+    return Array.from(setCursos).sort()
+  }, [leads])
+
   // Filtragem
   const leadsFiltrados = useMemo(() => {
     return leads.filter(lead => {
+      if (filtroCurso !== 'todos' && lead.curso_interesse !== filtroCurso) {
+        return false
+      }
+
       const termo = busca.toLowerCase()
       const matchBusca = 
         lead.nome_lead?.toLowerCase().includes(termo) ||
@@ -164,7 +179,24 @@ export default function CRMView() {
       }
       return true
     })
-  }, [leads, busca, filtroStatus])
+  }, [leads, busca, filtroStatus, filtroCurso])
+
+  const handleExportarLeads = () => {
+    if (leadsFiltrados.length === 0) {
+      mostrarToast('Nenhum lead na listagem para exportar.')
+      return
+    }
+    const dados = leadsFiltrados.map(l => ({
+      'Nome do Lead': l.nome_lead || '',
+      'WhatsApp': l.telefone || '',
+      'Curso de Interesse': l.curso_interesse || '',
+      'Status no Funil': l.status_funil || '',
+      'Data de Entrada': formatarDataBR(l.data_entrada)
+    }))
+    const dataHoje = new Date().toISOString().split('T')[0]
+    exportarParaCSV(dados, `Leads_CRM_${dataHoje}`)
+    mostrarToast(`Exportando ${leadsFiltrados.length} leads para Excel/CSV!`)
+  }
 
   const formatarDataBR = (dataIso) => {
     if (!dataIso) return '-'
@@ -236,6 +268,15 @@ export default function CRMView() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={handleExportarLeads}
+            className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold"
+            title="Exportar leads filtrados para CSV / Excel"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline">Exportar Excel</span>
+          </button>
+
+          <button
             onClick={() => carregarLeads(false)}
             disabled={loading || recarregando}
             className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer"
@@ -284,16 +325,33 @@ export default function CRMView() {
           ))}
         </div>
 
-        {/* Input de Busca */}
-        <div className="relative w-full sm:w-auto sm:min-w-[260px]">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar por lead, telefone ou curso..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
-          />
+        {/* Filtro por Curso e Busca */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Seletor de Curso */}
+          <select
+            value={filtroCurso}
+            onChange={(e) => setFiltroCurso(e.target.value)}
+            className="px-3 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 cursor-pointer"
+          >
+            <option value="todos">Todos os Cursos ({leads.length})</option>
+            {listaCursosDisponiveis.map(c => (
+              <option key={c} value={c} className="bg-slate-900 text-white">
+                {c}
+              </option>
+            ))}
+          </select>
+
+          {/* Input de Busca */}
+          <div className="relative w-full sm:w-auto sm:min-w-[240px]">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por lead, fone..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
+            />
+          </div>
         </div>
       </div>
 

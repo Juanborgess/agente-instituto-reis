@@ -17,6 +17,7 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [curso, setCurso] = useState('Barbeiro')
+  const [customCurso, setCustomCurso] = useState('')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -49,6 +50,13 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
       return
     }
 
+    const cursoFinal = curso === '__OUTRO__' ? customCurso.trim() : curso
+    if (curso === '__OUTRO__' && !cursoFinal) {
+      setErro('Por favor, digite o nome do curso de interesse.')
+      setLoading(false)
+      return
+    }
+
     const telFormatado = numLimpo.startsWith('55') ? numLimpo : '55' + numLimpo
     const dataHojeIso = new Date().toISOString().split('T')[0]
 
@@ -58,7 +66,7 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
         .insert([{
           nome_lead: nome.trim(),
           telefone: telFormatado,
-          curso_interesse: curso,
+          curso_interesse: cursoFinal,
           status_funil: 'Novo',
           fase_cadencia: '',
           data_entrada: dataHojeIso,
@@ -78,6 +86,7 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
         setNome('')
         setTelefone('')
         setCurso('Barbeiro')
+        setCustomCurso('')
         if (onLeadCriado) onLeadCriado(leadCriado)
         onClose()
       }
@@ -169,8 +178,24 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
                     {c}
                   </option>
                 ))}
+                <option value="__OUTRO__" className="bg-slate-900 text-brand-400 font-bold">
+                  + Outro Curso (Digitar Novo)...
+                </option>
               </select>
             </div>
+
+            {curso === '__OUTRO__' && (
+              <div className="mt-2 animate-fadeIn">
+                <input
+                  type="text"
+                  required
+                  value={customCurso}
+                  onChange={(e) => setCustomCurso(e.target.value)}
+                  placeholder="Nome do novo curso de interesse..."
+                  className="w-full px-3.5 py-2 bg-brand-500/10 border border-brand-500/30 rounded-xl text-sm text-brand-200 placeholder-brand-400/50 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                />
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex items-center justify-end gap-3">

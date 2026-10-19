@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabase'
 import { X, UserPlus, Calendar, Phone, BookOpen, User, Check, AlertCircle, DollarSign, Bookmark } from 'lucide-react'
 import { CURSOS_OFICIAIS, STATUS_OFICIAIS } from './ModalEditarAluno'
 import { sincronizarComPlanilha } from '../services/sheetsSync'
+import { parseMoedaSegura } from '../utils/exportCsv'
 
 export default function ModalNovoAluno({ isOpen, onClose, onAlunoCriado }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [curso, setCurso] = useState('Barbeiro')
+  const [customCurso, setCustomCurso] = useState('')
   const [vencimento, setVencimento] = useState('')
   const [status, setStatus] = useState('PENDENTE')
   const [valorParcela, setValorParcela] = useState('')
@@ -42,15 +44,22 @@ export default function ModalNovoAluno({ isOpen, onClose, onAlunoCriado }) {
       return
     }
 
+    const cursoFinal = curso === '__OUTRO__' ? customCurso.trim() : curso
+    if (curso === '__OUTRO__' && !cursoFinal) {
+      setErro('Por favor, digite o nome do curso.')
+      setLoading(false)
+      return
+    }
+
     const telFormatado = numLimpo.startsWith('55') ? numLimpo : '55' + numLimpo
 
     const novoAluno = {
       nome_aluno: nome.trim(),
       telefone_whatsapp: telFormatado,
-      curso: curso,
+      curso: cursoFinal,
       vencimento_atual: vencimento || null,
       status_pagamento: status,
-      valor_parcela: valorParcela ? parseFloat(valorParcela.replace(',', '.')) || 0 : 0,
+      valor_parcela: parseMoedaSegura(valorParcela),
       parcela_atual: parcelaAtual.trim(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -82,6 +91,7 @@ export default function ModalNovoAluno({ isOpen, onClose, onAlunoCriado }) {
         setNome('')
         setTelefone('')
         setCurso('Barbeiro')
+        setCustomCurso('')
         setVencimento('')
         setStatus('PENDENTE')
         setValorParcela('')
@@ -167,7 +177,7 @@ export default function ModalNovoAluno({ isOpen, onClose, onAlunoCriado }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                Curso (Oficial)
+                Curso
               </label>
               <div className="relative">
                 <BookOpen className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -181,8 +191,27 @@ export default function ModalNovoAluno({ isOpen, onClose, onAlunoCriado }) {
                       {c}
                     </option>
                   ))}
+                  <option value="__OUTRO__" className="bg-slate-900 text-brand-400 font-bold">
+                    + Outro Curso (Digitar Novo)...
+                  </option>
                 </select>
               </div>
+
+              {curso === '__OUTRO__' && (
+                <div className="mt-2 animate-fadeIn">
+                  <input
+                    type="text"
+                    required
+                    value={customCurso}
+                    onChange={(e) => setCustomCurso(e.target.value)}
+                    placeholder="Nome do novo curso..."
+                    className="w-full px-3.5 py-2 bg-brand-500/10 border border-brand-500/30 rounded-xl text-sm text-brand-200 placeholder-brand-400/50 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                  />
+                  <p className="text-[10px] text-brand-400/80 mt-1">
+                    Digite o novo curso que passará a valer para este aluno.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

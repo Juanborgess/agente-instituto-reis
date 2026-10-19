@@ -3,17 +3,19 @@ import { supabase } from '../lib/supabase'
 import { 
   Search, RefreshCw, CheckCircle2, MessageCircle, AlertTriangle, 
   Calendar, CreditCard, User, BookOpen, Clock, Check, Filter,
-  UserPlus, Edit3, XCircle
+  UserPlus, Edit3, XCircle, Download
 } from 'lucide-react'
 import ModalNovoAluno from '../components/ModalNovoAluno'
 import ModalEditarAluno from '../components/ModalEditarAluno'
 import { marcarPagoNaPlanilha } from '../services/sheetsSync'
+import { exportarParaCSV } from '../utils/exportCsv'
 
 export default function CobrancaView() {
   const [alunos, setAlunos] = useState([])
   const [loading, setLoading] = useState(true)
   const [recarregando, setRecarregando] = useState(false)
   const [filtroAba, setFiltroAba] = useState('todos')
+  const [filtroCurso, setFiltroCurso] = useState('todos')
   const [busca, setBusca] = useState('')
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
@@ -122,9 +124,23 @@ export default function CobrancaView() {
     setTimeout(() => setToastMsg(''), 4000)
   }
 
+  // Lista dinâmica e única de cursos existentes na carteira
+  const listaCursosDisponiveis = useMemo(() => {
+    const setCursos = new Set()
+    alunos.forEach(a => {
+      if (a.curso && a.curso.trim()) setCursos.add(a.curso.trim())
+    })
+    return Array.from(setCursos).sort()
+  }, [alunos])
+
   // Filtragem dos alunos
   const alunosFiltrados = useMemo(() => {
     return alunos.filter(aluno => {
+      // Filtro por curso selecionado
+      if (filtroCurso !== 'todos' && aluno.curso !== filtroCurso) {
+        return false
+      }
+
       const termo = busca.toLowerCase()
       const matchBusca = 
         aluno.nome_aluno?.toLowerCase().includes(termo) ||
@@ -158,7 +174,7 @@ export default function CobrancaView() {
       }
       return true
     })
-  }, [alunos, busca, filtroAba])
+  }, [alunos, busca, filtroAba, filtroCurso])
 
   // Contadores para as abas
   const contadores = useMemo(() => {
@@ -182,6 +198,25 @@ export default function CobrancaView() {
     })
     return { hoje, d1, d5, concluidos, desistiu, pendentes, total: alunos.length }
   }, [alunos])
+
+  const handleExportarAlunos = () => {
+    if (alunosFiltrados.length === 0) {
+      mostrarToast('Nenhum aluno na listagem para exportar.')
+      return
+    }
+    const dados = alunosFiltrados.map(a => ({
+      'Nome do Aluno': a.nome_aluno || '',
+      'WhatsApp': a.telefone_whatsapp || '',
+      'Curso': a.curso || '',
+      'Vencimento': formatarDataBR(a.vencimento_atual),
+      'Status': a.status_pagamento || '',
+      'Valor Parcela': a.valor_parcela ? `R$ ${Number(a.valor_parcela).toFixed(2).replace('.', ',')}` : 'R$ 0,00',
+      'Parcela': a.parcela_atual || ''
+    }))
+    const dataHoje = new Date().toISOString().split('T')[0]
+    exportarParaCSV(dados, `Alunos_Cobranca_${dataHoje}`)
+    mostrarToast(`Exportando ${alunosFiltrados.length} alunos para Excel/CSV!`)
+  }
 
   const formatarDataBR = (dataIso) => {
     if (!dataIso) return 'Sem data definida'
@@ -266,6 +301,15 @@ export default function CobrancaView() {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleExportarAlunos}
+            className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold"
+            title="Exportar listagem filtrada para Excel / CSV"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline">Exportar Excel</span>
+          </button>
+
           <button
             onClick={() => carregarAlunos(false)}
             disabled={loading || recarregando}
@@ -390,16 +434,33 @@ export default function CobrancaView() {
           ))}
         </div>
 
-        {/* Input de Busca */}
-        <div className="relative w-full sm:w-auto sm:min-w-[260px]">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar por aluno, telefone ou curso..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
-          />
+        {/* Filtro por Curso e Busca */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Seletor de Curso */}
+          <select
+            value={filtroCurso}
+            onChange={(e) => setFiltroCurso(e.target.value)}
+            className="px-3 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 cursor-pointer"
+          >
+            <option value="todos">Todos os Cursos ({alunos.length})</option>
+            {listaCursosDisponiveis.map(c => (
+              <option key={c} value={c} className="bg-slate-900 text-white">
+                {c}
+              </option>
+            ))}
+          </select>
+
+          {/* Input de Busca */}
+          <div className="relative w-full sm:w-auto sm:min-w-[240px]">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar aluno, fone..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
+            />
+          </div>
         </div>
       </div>
 

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   Trophy, Search, RefreshCw, MessageCircle, Phone, 
-  MapPin, Calendar, User, Eye, UserPlus, Sparkles, Filter, CheckCircle2, AlertCircle
+  MapPin, Calendar, User, Eye, UserPlus, Sparkles, Filter, CheckCircle2, AlertCircle, Download
 } from 'lucide-react'
 import ModalDetalhesParticipante from '../components/ModalDetalhesParticipante'
 import ModalSorteador from '../components/ModalSorteador'
+import { exportarParaCSV } from '../utils/exportCsv'
 
 export default function SorteioView() {
   const [participantes, setParticipantes] = useState([])
@@ -130,6 +131,26 @@ export default function SorteioView() {
     })
   }, [participantes, busca, filtroCurso])
 
+  const handleExportarSorteio = () => {
+    if (participantesFiltrados.length === 0) {
+      mostrarToast('Nenhum participante na listagem para exportar.')
+      return
+    }
+    const dados = participantesFiltrados.map(p => ({
+      'Nº': p.numero_participante || '',
+      'Nome Completo': p.nome_completo || '',
+      'WhatsApp': p.whatsapp || '',
+      'Bairro': p.bairro || '',
+      'Curso de Interesse': p.curso_interesse || '',
+      'Impedimento': p.impedimento || '',
+      'Melhor Horário': p.melhor_horario || '',
+      'Data/Hora Envio': p.data_hora_envio ? new Date(p.data_hora_envio).toLocaleString('pt-BR') : ''
+    }))
+    const dataHoje = new Date().toISOString().split('T')[0]
+    exportarParaCSV(dados, `Participantes_Sorteio_${dataHoje}`)
+    mostrarToast(`Exportando ${participantesFiltrados.length} respostas para Excel/CSV!`)
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-32 md:pb-12">
       {/* Toast Notification */}
@@ -178,6 +199,15 @@ export default function SorteioView() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportarSorteio}
+            className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold"
+            title="Exportar respostas filtradas para CSV / Excel"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline">Exportar Excel</span>
+          </button>
+
           <button
             onClick={() => carregarParticipantes(false)}
             disabled={loading || recarregando}

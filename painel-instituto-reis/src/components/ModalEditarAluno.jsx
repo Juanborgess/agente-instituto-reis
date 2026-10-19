@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { X, Edit3, Calendar, Phone, BookOpen, User, Check, AlertCircle, DollarSign, Bookmark, Trash2 } from 'lucide-react'
 import { sincronizarComPlanilha, excluirAlunoNaPlanilha } from '../services/sheetsSync'
+import { parseMoedaSegura } from '../utils/exportCsv'
 
 export const CURSOS_OFICIAIS = [
   'Barbeiro',
@@ -28,6 +29,8 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
   const [status, setStatus] = useState('PENDENTE')
   const [valorParcela, setValorParcela] = useState('')
   const [parcelaAtual, setParcelaAtual] = useState('')
+  const [customCurso, setCustomCurso] = useState('')
+  const [avisoAvanco, setAvisoAvanco] = useState('')
   const [loading, setLoading] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
@@ -36,11 +39,21 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
     if (aluno) {
       setNome(aluno.nome_aluno || '')
       setTelefone(formatarTelefoneVisual(aluno.telefone_whatsapp || ''))
-      setCurso(aluno.curso || 'Barbeiro')
+      if (CURSOS_OFICIAIS.includes(aluno.curso)) {
+        setCurso(aluno.curso)
+        setCustomCurso('')
+      } else if (aluno.curso) {
+        setCurso('__OUTRO__')
+        setCustomCurso(aluno.curso)
+      } else {
+        setCurso('Barbeiro')
+        setCustomCurso('')
+      }
       setVencimento(aluno.vencimento_atual || '')
       setStatus(aluno.status_pagamento || 'PENDENTE')
       setValorParcela(aluno.valor_parcela ? String(aluno.valor_parcela) : '')
       setParcelaAtual(aluno.parcela_atual || '')
+      setAvisoAvanco('')
       setErro('')
     }
   }, [aluno])
@@ -87,14 +100,15 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
     }
 
     const telFormatado = numLimpo.startsWith('55') ? numLimpo : '55' + numLimpo
+    const cursoFinal = curso === '__OUTRO__' ? (customCurso.trim() || 'Curso Especial') : curso
 
     const dadosAtualizados = {
       nome_aluno: nome.trim(),
       telefone_whatsapp: telFormatado,
-      curso: curso,
+      curso: cursoFinal,
       vencimento_atual: vencimento || null,
       status_pagamento: status,
-      valor_parcela: valorParcela ? parseFloat(valorParcela.replace(',', '.')) || 0 : 0,
+      valor_parcela: parseMoedaSegura(valorParcela),
       parcela_atual: parcelaAtual.trim(),
       updated_at: new Date().toISOString()
     }
@@ -132,6 +146,48 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
       setErro('Falha de conexão ao salvar alterações.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Avança o vencimento para o próximo mês (+30 dias) e incrementa a parcela
+  const handleAvancarParcela = () => {
+    let novaData = ''
+    if (vencimento) {
+      const [ano, mes, dia] = vencimento.split('-').map(Number)
+      const d = new Date(ano, mes, dia) // soma 1 mês
+      const a = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const diaStr = String(dia).padStart(2, '0')
+      novaData = `${a}-${m}-${diaStr}`
+    } else {
+      const hoje = new Date()
+      hoje.setMonth(hoje.getMonth() + 1)
+      novaData = hoje.toISOString().split('T')[0]
+    }
+    setVencimento(novaData)
+
+    let novaParcela = parcelaAtual
+    const matchBarra = String(parcelaAtual).match(/^(\d+)\/(\d+)$/)
+    if (matchBarra) {
+      const atual = parseInt(matchBarra[1], 10)
+      const total = parseInt(matchBarra[2], 10)
+      novaParcela = `${atual + 1}/${total}`
+    } else {
+      const num = parseInt(parcelaAtual, 10)
+      if (!isNaN(num)) {
+        novaParcela = String(num + 1)
+      } else {
+        novaParcela = '2/6'
+      }
+    }
+    setParcelaAtual(novaParcela)
+    setStatus('PENDENTE')
+
+    try {
+      const [a, m, d] = novaData.split('-')
+      setAvisoAvanco(`✓ Vencimento avançado para ${d}/${m}/${a} e parcela ${novaParcela} (Status: PENDENTE). Clique em "Salvar Alterações" para confirmar!`)
+    } catch {
+      setAvisoAvanco('✓ Próxima parcela calculada!')
     }
   }
 
@@ -256,8 +312,24 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
                       {c}
                     </option>
                   ))}
+                  <option value="__OUTRO__" className="bg-slate-900 text-amber-300 font-bold">
+                    + Outro Curso (Digitar Novo)...
+                  </option>
                 </select>
               </div>
+
+              {curso === '__OUTRO__' && (
+                <div className="mt-2 animate-fadeIn">
+                  <input
+                    type="text"
+                    required
+                    value={customCurso}
+                    onChange={(e) => setCustomCurso(e.target.value)}
+                    placeholder="Digite o nome do novo curso..."
+                    className="w-full px-3.5 py-2 bg-slate-900/90 border border-amber-500/40 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -296,9 +368,26 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
               onChange={(e) => setVencimento(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-900/90 border border-white/15 rounded-xl text-sm text-white font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-400 mt-1 mb-2.5">
               O robô da VPS lê essa data para disparar no D-5, D-1 e no dia do vencimento.
             </p>
+
+            {/* Botão de Avançar Próxima Parcela */}
+            <button
+              type="button"
+              onClick={handleAvancarParcela}
+              className="w-full py-2 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
+              title="Avança 1 mês no vencimento e incrementa a parcela atual (ex: 1/6 para 2/6)"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>📅 Renovar Mensalidade: Criar Próxima Parcela (+1 Mês)</span>
+            </button>
+
+            {avisoAvanco && (
+              <p className="text-[11px] text-emerald-400 font-semibold mt-2 animate-fadeIn bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                {avisoAvanco}
+              </p>
+            )}
           </div>
 
           {/* Valor da Parcela e Parcela Atual (Opcionais) */}
