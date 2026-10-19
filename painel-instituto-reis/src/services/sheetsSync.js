@@ -56,3 +56,41 @@ export async function excluirAlunoNaPlanilha(telefone, curso, nome) {
   })
 }
 
+/**
+ * Atualiza o status do funil de vendas de um lead diretamente na aba CRM_Vendas.
+ */
+export async function alterarStatusLeadNaPlanilha(telefone, curso, novoStatus) {
+  return sincronizarComPlanilha({
+    action: 'alterar_status_lead',
+    telefone,
+    curso,
+    novo_status: novoStatus
+  })
+}
+
+/**
+ * Cadastra um novo lead diretamente na aba CRM_Vendas.
+ */
+export async function salvarLeadNaPlanilha(dadosLead) {
+  return sincronizarComPlanilha({
+    action: 'salvar_lead',
+    nome_lead: dadosLead.nome_lead,
+    telefone: dadosLead.telefone,
+    curso_interesse: dadosLead.curso_interesse,
+    status_funil: dadosLead.status_funil || 'Novo',
+    data_entrada: dadosLead.data_entrada
+  })
+}
+
+/**
+ * Exclui um lead da aba CRM_Vendas.
+ */
+export async function excluirLeadNaPlanilha(telefone, curso) {
+  return sincronizarComPlanilha({
+    action: 'excluir_lead',
+    telefone,
+    curso
+  })
+}
+
+

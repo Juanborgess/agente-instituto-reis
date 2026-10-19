@@ -2,13 +2,15 @@
  * ==============================================================================
  * SISTEMA UNIFICADO - INSTITUTO REIS
  * 1. Sorteio QR Code (Aba: Sorteio_QR_Code)
- * 2. Sincronização Bi-direcional em Tempo Real (Aba: Cobranca_Alunos <-> Painel Web & Supabase)
+ * 2. Cobrança Preventiva (Aba: Cobranca_Alunos <-> Supabase & Painel)
+ * 3. CRM & Funil de Vendas (Aba: CRM_Vendas <-> Supabase & Painel)
  * ==============================================================================
  */
 
 // --- CONFIGURAÇÕES DAS ABAS E SUPABASE ---
 const SHEET_NAME_SORTEIO = "Sorteio_QR_Code";
 const ABA_COBRANCA = "Cobranca_Alunos";
+const ABA_CRM = "CRM_Vendas";
 
 const SUPABASE_URL = "https://szoypbzmqgidzadjxbvs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6b3lwYnptcWdpZHphZGp4YnZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjAwODI0NSwiZXhwIjoyMTA3NTg0MjQ1fQ.ImWBmPW1ASOsq9jc9ruFZZxNfzYHtlBnmAyJA2qQAII";
@@ -19,13 +21,14 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("⚡ Painel Instituto Reis")
-    .addItem("🔄 Sincronizar Tudo com Supabase", "sincronizarTudoParaSupabase")
+    .addItem("🔄 Sincronizar Tudo (Cobrança & CRM)", "sincronizarTudoParaSupabase")
     .addItem("🧪 Testar Conexão com Supabase", "testarConexaoSupabase")
     .addToUi();
 }
 
 /**
- * ROTEADOR POST (Recebe tanto requisições do Sorteio QR Code quanto do Painel de Cobrança)
+ * ROTEADOR POST PRINCIPAL
+ * Direciona requisições vindas do Painel Web (Cobrança e CRM) e do Sorteio QR Code
  */
 function doPost(e) {
   try {
@@ -33,12 +36,17 @@ function doPost(e) {
     const body = e.postData ? e.postData.contents : "";
     const data = body ? JSON.parse(body) : {};
 
-    // 1. SE FOR REQUISIÇÃO DO PAINEL DE COBRANÇA
+    // 1. REQUISIÇÕES DE COBRANÇA
     if (data.action === "salvar_aluno" || data.action === "editar_aluno" || data.action === "novo_aluno" || data.action === "marcar_pago" || data.action === "excluir_aluno") {
       return processarCobranca(doc, data);
     }
 
-    // 2. SE FOR REQUISIÇÃO DO SORTEIO QR CODE (Mantém 100% seu código original)
+    // 2. REQUISIÇÕES DE CRM & FUNIL DE VENDAS
+    if (data.action === "salvar_lead" || data.action === "alterar_status_lead" || data.action === "excluir_lead") {
+      return processarCrm(doc, data);
+    }
+
+    // 3. REQUISIÇÕES DO SORTEIO QR CODE (100% preservado)
     return processarSorteioQRCode(doc, data);
 
   } catch (error) {
@@ -52,28 +60,24 @@ function doPost(e) {
  * Health check GET
  */
 function doGet() {
-  return ContentService.createTextOutput("A API do Instituto Reis está ativa! (Sorteio QR Code & Sincronização Cobrança)");
+  return ContentService.createTextOutput("A API do Instituto Reis está ativa! (Sorteio QR Code, Cobrança & CRM)");
 }
 
 // ==============================================================================
-// 1. MÓDULO SORTEIO QR CODE (CÓDIGO ORIGINAL PRESERVADO)
+// 1. MÓDULO SORTEIO QR CODE (ORIGINAL PRESERVADO)
 // ==============================================================================
 function processarSorteioQRCode(doc, data) {
   let sheet = doc.getSheetByName(SHEET_NAME_SORTEIO);
   if (!sheet) { sheet = doc.getSheets()[0]; }
 
-  // Calcula o número ANTES de gravar (getLastRow inclui o cabeçalho)
-  // Linha 1 = cabeçalho → getLastRow() = 1 → primeiro participante = #1 ✅
-  // 3 participantes gravados → getLastRow() = 4 → próximo = #4 ✅
   const numeroParticipante = sheet.getLastRow();
 
-  // Timestamp no horário de Brasília
   const timestamp = Utilities.formatDate(
     new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss"
   );
 
   const rowData = [
-    numeroParticipante,               // A - Nº Participante (NOVO)
+    numeroParticipante,               // A - Nº Participante
     data.curso_interesse || "",       // B
     data.contato_anterior || "",      // C
     data.conhecimento || "",          // D
@@ -88,12 +92,11 @@ function processarSorteioQRCode(doc, data) {
     data.whatsapp || "",              // M
     data.bairro || "",                // N
     data.email || "",                 // O
-    timestamp                         // P - Data/Hora (NOVO)
+    timestamp                         // P - Data/Hora
   ];
 
   sheet.appendRow(rowData);
 
-  // Retorna sucesso + o número do participante para o site exibir
   return ContentService
     .createTextOutput(JSON.stringify({
       status: "success",
@@ -103,7 +106,7 @@ function processarSorteioQRCode(doc, data) {
 }
 
 // ==============================================================================
-// 2. MÓDULO COBRANÇA: PAINEL WEB -> PLANILHA (Linha exata vazia, status e datas)
+// 2. MÓDULO COBRANÇA: PAINEL WEB -> PLANILHA
 // ==============================================================================
 function processarCobranca(doc, body) {
   const sheet = doc.getSheetByName(ABA_COBRANCA);
@@ -114,7 +117,7 @@ function processarCobranca(doc, body) {
 
   const acao = body.action || "salvar_aluno";
 
-  // Ação A: Marcar como Pago (1 clique no painel)
+  // Ação: Marcar como Pago (1 clique no painel)
   if (acao === "marcar_pago") {
     const telAlvo = limparTelefone(body.telefone);
     const cursoAlvo = String(body.curso || "").trim().toLowerCase();
@@ -141,7 +144,7 @@ function processarCobranca(doc, body) {
     }
   }
 
-  // Ação B: Excluir Aluno (Remove a linha exata da planilha)
+  // Ação: Excluir Aluno (Remove a linha exata da planilha)
   if (acao === "excluir_aluno") {
     const telAlvo = limparTelefone(body.telefone_whatsapp || body.telefone);
     const cursoAlvo = String(body.curso || "").trim().toLowerCase();
@@ -184,7 +187,7 @@ function processarCobranca(doc, body) {
     }
   }
 
-  // Ação C: Cadastrar Novo Aluno ou Editar Existente
+  // Ação: Cadastrar Novo Aluno ou Editar Existente
   const nome = String(body.nome_aluno || body.nome || "").trim();
   const tel = limparTelefone(body.telefone_whatsapp || body.telefone);
   const curso = String(body.curso || "Barbeiro").trim();
@@ -218,12 +221,10 @@ function processarCobranca(doc, body) {
     linhaDestino = linhaEncontrada;
     operacao = "atualizado";
   } else {
-    // Encontra a linha exata que está vazia na Coluna A
     linhaDestino = obterPrimeiraLinhaVazia(sheet);
     operacao = "inserido";
   }
 
-  // Grava exatamente os 7 campos
   const valoresLinha = [[nome, tel, curso, vencFormatado, status, valor, parcela]];
   sheet.getRange(linhaDestino, 1, 1, 7).setValues(valoresLinha);
 
@@ -242,7 +243,110 @@ function processarCobranca(doc, body) {
 }
 
 // ==============================================================================
-// 3. MÓDULO COBRANÇA: PLANILHA -> SUPABASE & PAINEL (Gatilho onEdit em tempo real)
+// 3. MÓDULO CRM: PAINEL WEB -> PLANILHA (Status Funil, Novo Lead, Exclusão)
+// ==============================================================================
+function processarCrm(doc, body) {
+  const sheet = doc.getSheetByName(ABA_CRM);
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Aba " + ABA_CRM + " não encontrada" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const acao = body.action;
+
+  // Ação 1: Alterar Status do Funil (Novo, Em Cadência, Atendimento Humano, Ganhou, Perdeu)
+  if (acao === "alterar_status_lead") {
+    const telAlvo = limparTelefone(body.telefone);
+    const cursoAlvo = String(body.curso || "").trim().toLowerCase();
+    const novoStatus = String(body.novo_status || "Novo").trim();
+
+    const dadosC = sheet.getRange("C:C").getValues(); // Telefone
+    const dadosD = sheet.getRange("D:D").getValues(); // Curso
+
+    let linhaEncontrada = -1;
+    for (let i = 1; i < dadosC.length; i++) {
+      const t = limparTelefone(dadosC[i][0]);
+      const c = String(dadosD[i][0] || "").trim().toLowerCase();
+      if (t === telAlvo && (!cursoAlvo || c.indexOf(cursoAlvo) !== -1 || cursoAlvo.indexOf(c) !== -1)) {
+        linhaEncontrada = i + 1;
+        break;
+      }
+    }
+
+    if (linhaEncontrada !== -1) {
+      // Coluna E é a 5 (Status_Funil)
+      sheet.getRange(linhaEncontrada, 5).setValue(novoStatus);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        action: "alterar_status_lead",
+        linha: linhaEncontrada,
+        status: novoStatus
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: "Lead não localizado na aba CRM_Vendas"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // Ação 2: Cadastrar Novo Lead pelo Painel
+  if (acao === "salvar_lead") {
+    const nome = String(body.nome_lead || body.nome || "").trim();
+    const tel = limparTelefone(body.telefone);
+    const curso = String(body.curso_interesse || body.curso || "Barbeiro").trim();
+    const status = String(body.status_funil || "Novo").trim();
+    const dataEntradaBR = formatarDataBR(body.data_entrada) || Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy");
+
+    const linhaDestino = obterPrimeiraLinhaVazia(sheet);
+    const valoresLinha = [[dataEntradaBR, nome, tel, curso, status, "", "", ""]];
+    sheet.getRange(linhaDestino, 1, 1, 8).setValues(valoresLinha);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      action: "salvar_lead",
+      linha: linhaDestino
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Ação 3: Excluir Lead
+  if (acao === "excluir_lead") {
+    const telAlvo = limparTelefone(body.telefone);
+    const cursoAlvo = String(body.curso || "").trim().toLowerCase();
+    const dadosC = sheet.getRange("C:C").getValues();
+    const dadosD = sheet.getRange("D:D").getValues();
+
+    let linhaEncontrada = -1;
+    for (let i = 1; i < dadosC.length; i++) {
+      const t = limparTelefone(dadosC[i][0]);
+      const c = String(dadosD[i][0] || "").trim().toLowerCase();
+      if (t === telAlvo && (!cursoAlvo || c.indexOf(cursoAlvo) !== -1 || cursoAlvo.indexOf(c) !== -1)) {
+        linhaEncontrada = i + 1;
+        break;
+      }
+    }
+
+    if (linhaEncontrada !== -1) {
+      sheet.deleteRow(linhaEncontrada);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        action: "excluir_lead",
+        linha: linhaEncontrada
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: "Lead não localizado para exclusão"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Ação de CRM não reconhecida" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ==============================================================================
+// 4. GATILHO ONEDIT EM TEMPO REAL: PLANILHA -> SUPABASE & PAINEL WEB
 // ==============================================================================
 function onEdit(e) {
   aoEditarPlanilha(e);
@@ -252,20 +356,24 @@ function aoEditarPlanilha(e) {
   try {
     if (!e || !e.range) return;
     const sheet = e.range.getSheet();
-    
-    // IMPORTANTE: Só sincroniza quando for a aba Cobranca_Alunos (Sorteio não é afetado!)
-    if (sheet.getName() !== ABA_COBRANCA) return;
-
+    const nomeAba = sheet.getName();
     const linha = e.range.getRow();
     if (linha <= 1) return; // Ignora cabeçalho
 
-    sincronizarLinhaParaSupabase(sheet, linha);
+    if (nomeAba === ABA_COBRANCA) {
+      sincronizarLinhaCobrancaParaSupabase(sheet, linha);
+    } else if (nomeAba === ABA_CRM) {
+      sincronizarLinhaCrmParaSupabase(sheet, linha);
+    }
   } catch (err) {
     Logger.log("Erro no aoEditarPlanilha: " + err);
   }
 }
 
-function sincronizarLinhaParaSupabase(sheet, linha) {
+/**
+ * Sincroniza linha editada da aba Cobranca_Alunos para a tabela alunos_cobranca
+ */
+function sincronizarLinhaCobrancaParaSupabase(sheet, linha) {
   const range = sheet.getRange(linha, 1, 1, 7);
   const dados = range.getValues()[0];
 
@@ -333,18 +441,99 @@ function sincronizarLinhaParaSupabase(sheet, linha) {
   }
 }
 
+/**
+ * Sincroniza linha editada da aba CRM_Vendas para a tabela leads_crm
+ */
+function sincronizarLinhaCrmParaSupabase(sheet, linha) {
+  const range = sheet.getRange(linha, 1, 1, 8);
+  const dados = range.getValues()[0];
+
+  const dataEntrada = dados[0];
+  const nome = String(dados[1] || "").trim();
+  const telBruto = String(dados[2] || "").trim();
+  const curso = String(dados[3] || "Barbeiro").trim();
+  const statusFunil = String(dados[4] || "Novo").trim();
+  const faseCadencia = String(dados[5] || "").trim();
+  const dataUltimoEnvio = dados[6];
+  const idMsgMeta = String(dados[7] || "").trim();
+
+  const telLimpo = limparTelefone(telBruto);
+  if (!telLimpo && !nome) return;
+
+  const dataEntradaIso = formatarDataISO(dataEntrada) || Utilities.formatDate(new Date(), "America/Sao_Paulo", "yyyy-MM-dd");
+  const dataUltimoEnvioIso = formatarDataISO(dataUltimoEnvio);
+
+  const payload = {
+    data_entrada: dataEntradaIso,
+    nome_lead: nome || "Lead Sem Nome",
+    telefone: telLimpo,
+    curso_interesse: curso || "Barbeiro",
+    status_funil: statusFunil,
+    fase_cadencia: faseCadencia,
+    data_ultimo_envio: dataUltimoEnvioIso,
+    id_mensagem_meta: idMsgMeta,
+    updated_at: new Date().toISOString()
+  };
+
+  const urlBusca = SUPABASE_URL + "/rest/v1/leads_crm?telefone=eq." + telLimpo + "&curso_interesse=eq." + encodeURIComponent(payload.curso_interesse) + "&select=id";
+  const resBusca = UrlFetchApp.fetch(urlBusca, {
+    method: "GET",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
+    },
+    muteHttpExceptions: true
+  });
+
+  const listaExistentes = JSON.parse(resBusca.getContentText());
+
+  if (listaExistentes && listaExistentes.length > 0) {
+    const id = listaExistentes[0].id;
+    UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/leads_crm?id=eq." + id, {
+      method: "PATCH",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    Logger.log("Lead atualizado no Supabase: " + nome + " -> " + statusFunil);
+  } else {
+    payload.created_at = new Date().toISOString();
+    UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/leads_crm", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    Logger.log("Novo lead inserido no Supabase: " + nome);
+  }
+}
+
 // ==============================================================================
-// 4. FUNÇÕES UTILITÁRIAS
+// 5. FUNÇÕES UTILITÁRIAS
 // ==============================================================================
 function obterPrimeiraLinhaVazia(sheet) {
   const valoresColA = sheet.getRange("A:A").getValues();
-  for (let i = 1; i < valoresColA.length; i++) {
-    const val = valoresColA[i][0];
-    if (val === null || val === undefined || String(val).trim() === "") {
+  const valoresColB = sheet.getRange("B:B").getValues();
+  const max = Math.max(valoresColA.length, valoresColB.length);
+
+  for (let i = 1; i < max; i++) {
+    const valA = valoresColA[i] ? valoresColA[i][0] : null;
+    const valB = valoresColB[i] ? valoresColB[i][0] : null;
+    const vazioA = valA === null || valA === undefined || String(valA).trim() === "";
+    const vazioB = valB === null || valB === undefined || String(valB).trim() === "";
+    if (vazioA && vazioB) {
       return i + 1;
     }
   }
-  return valoresColA.length + 1;
+  return max + 1;
 }
 
 function limparTelefone(tel) {
@@ -426,25 +615,45 @@ function testarConexaoSupabase() {
   }
 }
 
+/**
+ * Sincroniza todas as linhas de Cobrança e de CRM com o Supabase
+ */
 function sincronizarTudoParaSupabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(ABA_COBRANCA);
-  if (!sheet) {
-    SpreadsheetApp.getUi().alert("Aba " + ABA_COBRANCA + " não encontrada!");
-    return;
-  }
 
-  const ultimaLinha = sheet.getLastRow();
-  let totalSincronizados = 0;
-
-  for (let r = 2; r <= ultimaLinha; r++) {
-    const nome = sheet.getRange(r, 1).getValue();
-    const tel = sheet.getRange(r, 2).getValue();
-    if (nome || tel) {
-      sincronizarLinhaParaSupabase(sheet, r);
-      totalSincronizados++;
+  // 1. Sincroniza Cobrança
+  const sheetCob = ss.getSheetByName(ABA_COBRANCA);
+  let totalCob = 0;
+  if (sheetCob) {
+    const maxCob = sheetCob.getLastRow();
+    for (let r = 2; r <= maxCob; r++) {
+      const nome = sheetCob.getRange(r, 1).getValue();
+      const tel = sheetCob.getRange(r, 2).getValue();
+      if (nome || tel) {
+        sincronizarLinhaCobrancaParaSupabase(sheetCob, r);
+        totalCob++;
+      }
     }
   }
 
-  SpreadsheetApp.getUi().alert("✅ Sincronização concluída! Total de linhas verificadas: " + totalSincronizados);
+  // 2. Sincroniza CRM
+  const sheetCrm = ss.getSheetByName(ABA_CRM);
+  let totalCrm = 0;
+  if (sheetCrm) {
+    const maxCrm = sheetCrm.getLastRow();
+    for (let r = 2; r <= maxCrm; r++) {
+      const nome = sheetCrm.getRange(r, 2).getValue();
+      const tel = sheetCrm.getRange(r, 3).getValue();
+      if (nome || tel) {
+        sincronizarLinhaCrmParaSupabase(sheetCrm, r);
+        totalCrm++;
+      }
+    }
+  }
+
+  SpreadsheetApp.getUi().alert(
+    "✅ Sincronização concluída com sucesso!\n\n" +
+    "• Alunos Cobrança sincronizados: " + totalCob + "\n" +
+    "• Leads CRM sincronizados: " + totalCrm
+  );
 }

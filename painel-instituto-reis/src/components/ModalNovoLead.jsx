@@ -1,17 +1,16 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { X, UserPlus, Phone, BookOpen, User, Check, AlertCircle } from 'lucide-react'
+import { salvarLeadNaPlanilha } from '../services/sheetsSync'
 
 const CURSOS_DISPONIVEIS = [
   'Barbeiro',
   'Barbeiro Avançado',
+  'Lashes',
+  'Sobrancelha',
   'Trança',
-  'Design de Sobrancelhas',
-  'Lashes / Extensão de Cílios',
-  'Cabeleireiro',
-  'Manicure & Pedicure',
-  'Estética Facial',
-  'Outro Curso'
+  'trança avançado',
+  'Brow Lamination'
 ]
 
 export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
@@ -71,10 +70,15 @@ export default function ModalNovoLead({ isOpen, onClose, onLeadCriado }) {
       if (error) {
         setErro(error.message)
       } else if (data && data.length > 0) {
+        const leadCriado = data[0]
+
+        // Sincroniza em segundo plano com a aba CRM_Vendas da planilha
+        salvarLeadNaPlanilha(leadCriado)
+
         setNome('')
         setTelefone('')
         setCurso('Barbeiro')
-        if (onLeadCriado) onLeadCriado(data[0])
+        if (onLeadCriado) onLeadCriado(leadCriado)
         onClose()
       }
     } catch (err) {

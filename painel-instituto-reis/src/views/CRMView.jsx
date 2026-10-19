@@ -2,21 +2,30 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   UserPlus, Search, RefreshCw, MessageCircle, UserCheck, 
-  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight
+  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight, Trash2
 } from 'lucide-react'
 import ModalNovoLead from '../components/ModalNovoLead'
+import { alterarStatusLeadNaPlanilha, excluirLeadNaPlanilha } from '../services/sheetsSync'
 
 export default function CRMView() {
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
+  const [recarregando, setRecarregando] = useState(false)
   const [filtroStatus, setFiltroStatus] = useState('todos')
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
 
-  const carregarLeads = async () => {
-    setLoading(true)
+  const carregarLeads = async (silencioso = false) => {
+    if (!silencioso) {
+      if (leads.length === 0) {
+        setLoading(true)
+      } else {
+        setRecarregando(true)
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('leads_crm')
@@ -30,11 +39,30 @@ export default function CRMView() {
       console.error("Erro ao carregar leads:", err)
     } finally {
       setLoading(false)
+      setRecarregando(false)
     }
   }
 
   useEffect(() => {
-    carregarLeads()
+    carregarLeads(false)
+
+    // Conexão em tempo real com o Supabase (atualizações na aba CRM_Vendas refletem na hora)
+    const channel = supabase
+      .channel('realtime_leads_crm')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads_crm' }, () => {
+        carregarLeads(true)
+      })
+      .subscribe()
+
+    // Verificação de segurança silenciosa a cada 30 segundos
+    const intervalo = setInterval(() => {
+      carregarLeads(true)
+    }, 30000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(intervalo)
+    }
   }, [])
 
   const mostrarToast = (msg) => {
@@ -42,9 +70,9 @@ export default function CRMView() {
     setTimeout(() => setToastMsg(''), 4000)
   }
 
-  // Atualização rápida de status do funil
-  const handleAlterarStatus = async (leadId, novoStatus) => {
-    setProcessandoId(leadId)
+  // Atualização rápida de status do funil (Supabase + Planilha)
+  const handleAlterarStatus = async (lead, novoStatus) => {
+    setProcessandoId(lead.id)
     try {
       const { error } = await supabase
         .from('leads_crm')
@@ -52,16 +80,49 @@ export default function CRMView() {
           status_funil: novoStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', leadId)
+        .eq('id', lead.id)
 
       if (!error) {
-        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status_funil: novoStatus } : l))
+        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status_funil: novoStatus } : l))
         mostrarToast(`Status atualizado para: ${novoStatus}`)
+
+        // Sincroniza em segundo plano com a aba CRM_Vendas da planilha
+        alterarStatusLeadNaPlanilha(lead.telefone, lead.curso_interesse, novoStatus)
       } else {
         mostrarToast(`Erro: ${error.message}`)
       }
     } catch (err) {
       mostrarToast("Erro ao conectar ao servidor.")
+    } finally {
+      setProcessandoId(null)
+    }
+  }
+
+  // Exclusão de Lead (Supabase + Planilha)
+  const handleExcluirLead = async (lead) => {
+    const confirmou = window.confirm(
+      `Deseja realmente excluir o lead "${lead.nome_lead}"?\n\nEsta ação removerá o lead tanto do painel quanto da aba CRM_Vendas da planilha permanentemente.`
+    )
+    if (!confirmou) return
+
+    setProcessandoId(lead.id)
+    try {
+      const { error } = await supabase
+        .from('leads_crm')
+        .delete()
+        .eq('id', lead.id)
+
+      if (!error) {
+        setLeads(prev => prev.filter(l => l.id !== lead.id))
+        mostrarToast("Lead excluído com sucesso do painel e da planilha!")
+
+        // Remove da planilha Google Sheets
+        excluirLeadNaPlanilha(lead.telefone, lead.curso_interesse)
+      } else {
+        mostrarToast(`Erro ao excluir: ${error.message}`)
+      }
+    } catch (err) {
+      mostrarToast("Falha ao excluir o lead.")
     } finally {
       setProcessandoId(null)
     }
@@ -158,12 +219,12 @@ export default function CRMView() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={carregarLeads}
-            disabled={loading}
+            onClick={() => carregarLeads(false)}
+            disabled={loading || recarregando}
             className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer"
             title="Recarregar"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${recarregando || loading ? 'animate-spin' : ''}`} />
           </button>
 
           <button
@@ -311,7 +372,7 @@ export default function CRMView() {
                   {/* Botão de Assumir Atendimento (Stop Rule do Robô) */}
                   {!isHumano && !isGanhou && !isPerdeu && (
                     <button
-                      onClick={() => handleAlterarStatus(lead.id, 'Atendimento Humano')}
+                      onClick={() => handleAlterarStatus(lead, 'Atendimento Humano')}
                       disabled={processandoId === lead.id}
                       className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-purple-600/20"
                     >
@@ -320,7 +381,7 @@ export default function CRMView() {
                     </button>
                   )}
 
-                  {/* Botões Secundários: WhatsApp + Ganhou + Perdeu */}
+                  {/* Botões Secundários: WhatsApp + Ganhou + Perdeu + Excluir */}
                   <div className="flex items-center gap-2">
                     <a
                       href={linkWhatsApp}
@@ -334,7 +395,7 @@ export default function CRMView() {
 
                     {!isGanhou && (
                       <button
-                        onClick={() => handleAlterarStatus(lead.id, 'Ganhou')}
+                        onClick={() => handleAlterarStatus(lead, 'Ganhou')}
                         disabled={processandoId === lead.id}
                         className="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
                         title="Matriculou! Marcar como Ganhou"
@@ -345,7 +406,7 @@ export default function CRMView() {
 
                     {!isPerdeu && (
                       <button
-                        onClick={() => handleAlterarStatus(lead.id, 'Perdeu')}
+                        onClick={() => handleAlterarStatus(lead, 'Perdeu')}
                         disabled={processandoId === lead.id}
                         className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 text-xs font-bold transition-all cursor-pointer"
                         title="Desistiu / Não tem interesse"
@@ -353,6 +414,15 @@ export default function CRMView() {
                         <XCircle className="w-4 h-4" />
                       </button>
                     )}
+
+                    <button
+                      onClick={() => handleExcluirLead(lead)}
+                      disabled={processandoId === lead.id}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                      title="Excluir Lead do Painel e da Planilha"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
