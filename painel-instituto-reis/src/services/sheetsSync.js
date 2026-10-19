@@ -83,6 +83,22 @@ export async function salvarLeadNaPlanilha(dadosLead) {
 }
 
 /**
+ * Edita um lead existente diretamente na aba CRM_Vendas.
+ */
+export async function editarLeadNaPlanilha(dadosLead) {
+  return sincronizarComPlanilha({
+    action: 'editar_lead',
+    nome_lead: dadosLead.nome_lead,
+    telefone: dadosLead.telefone,
+    curso_interesse: dadosLead.curso_interesse,
+    status_funil: dadosLead.status_funil,
+    data_entrada: dadosLead.data_entrada,
+    antigo_telefone: dadosLead.antigo_telefone,
+    antigo_curso: dadosLead.antigo_curso
+  })
+}
+
+/**
  * Exclui um lead da aba CRM_Vendas.
  */
 export async function excluirLeadNaPlanilha(telefone, curso) {
@@ -92,5 +108,6 @@ export async function excluirLeadNaPlanilha(telefone, curso) {
     curso
   })
 }
+
 
 

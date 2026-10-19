@@ -2,9 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   UserPlus, Search, RefreshCw, MessageCircle, UserCheck, 
-  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight, Trash2
+  Trophy, XCircle, Clock, Calendar, CheckCircle2, AlertCircle, Phone, ArrowRight, Trash2, Edit3
 } from 'lucide-react'
 import ModalNovoLead from '../components/ModalNovoLead'
+import ModalEditarLead from '../components/ModalEditarLead'
 import { alterarStatusLeadNaPlanilha, excluirLeadNaPlanilha } from '../services/sheetsSync'
 
 export default function CRMView() {
@@ -14,6 +15,7 @@ export default function CRMView() {
   const [filtroStatus, setFiltroStatus] = useState('todos')
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [leadParaEditar, setLeadParaEditar] = useState(null)
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
 
@@ -203,6 +205,21 @@ export default function CRMView() {
         }}
       />
 
+      {/* Modal de Editar Lead */}
+      <ModalEditarLead
+        lead={leadParaEditar}
+        isOpen={!!leadParaEditar}
+        onClose={() => setLeadParaEditar(null)}
+        onLeadAtualizado={(atualizado) => {
+          setLeads(prev => prev.map(l => l.id === atualizado.id ? atualizado : l))
+          mostrarToast(`Dados de ${atualizado.nome_lead} atualizados com sucesso!`)
+        }}
+        onLeadExcluido={(idExcluido) => {
+          setLeads(prev => prev.filter(l => l.id !== idExcluido))
+          mostrarToast("Lead excluído com sucesso do painel e da planilha!")
+        }}
+      />
+
       {/* HEADER DA SEÇÃO & BOTÃO NOVO LEAD */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -381,8 +398,17 @@ export default function CRMView() {
                     </button>
                   )}
 
-                  {/* Botões Secundários: WhatsApp + Ganhou + Perdeu + Excluir */}
+                  {/* Botões Secundários: Editar + WhatsApp + Ganhou + Perdeu + Excluir */}
                   <div className="flex items-center gap-2">
+                    {/* Botão de Editar Lead */}
+                    <button
+                      onClick={() => setLeadParaEditar(lead)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                      title="Editar Lead (Nome, Curso, Telefone, Status)"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
                     <a
                       href={linkWhatsApp}
                       target="_blank"

@@ -42,7 +42,7 @@ function doPost(e) {
     }
 
     // 2. REQUISIÇÕES DE CRM & FUNIL DE VENDAS
-    if (data.action === "salvar_lead" || data.action === "alterar_status_lead" || data.action === "excluir_lead") {
+    if (data.action === "salvar_lead" || data.action === "novo_lead" || data.action === "editar_lead" || data.action === "alterar_status_lead" || data.action === "excluir_lead") {
       return processarCrm(doc, data);
     }
 
@@ -291,7 +291,7 @@ function processarCrm(doc, body) {
   }
 
   // Ação 2: Cadastrar Novo Lead pelo Painel
-  if (acao === "salvar_lead") {
+  if (acao === "salvar_lead" || acao === "novo_lead") {
     const nome = String(body.nome_lead || body.nome || "").trim();
     const tel = limparTelefone(body.telefone);
     const curso = String(body.curso_interesse || body.curso || "Barbeiro").trim();
@@ -309,18 +309,87 @@ function processarCrm(doc, body) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Ação 3: Excluir Lead
-  if (acao === "excluir_lead") {
-    const telAlvo = limparTelefone(body.telefone);
-    const cursoAlvo = String(body.curso || "").trim().toLowerCase();
-    const dadosC = sheet.getRange("C:C").getValues();
-    const dadosD = sheet.getRange("D:D").getValues();
+  // Ação 3: Editar Lead Existente na Planilha
+  if (acao === "editar_lead") {
+    const telBusca = limparTelefone(body.antigo_telefone || body.telefone);
+    const cursoBusca = String(body.antigo_curso || body.curso_interesse || body.curso || "").trim().toLowerCase();
+    const nomeBusca = String(body.nome_lead || body.nome || "").trim().toLowerCase();
+
+    const dadosB = sheet.getRange("B:B").getValues(); // Nome
+    const dadosC = sheet.getRange("C:C").getValues(); // Telefone
+    const dadosD = sheet.getRange("D:D").getValues(); // Curso
 
     let linhaEncontrada = -1;
     for (let i = 1; i < dadosC.length; i++) {
       const t = limparTelefone(dadosC[i][0]);
       const c = String(dadosD[i][0] || "").trim().toLowerCase();
-      if (t === telAlvo && (!cursoAlvo || c.indexOf(cursoAlvo) !== -1 || cursoAlvo.indexOf(c) !== -1)) {
+      const n = String(dadosB[i][0] || "").trim().toLowerCase();
+
+      if (telBusca && t === telBusca) {
+        if (!cursoBusca || c.indexOf(cursoBusca) !== -1 || cursoBusca.indexOf(c) !== -1) {
+          linhaEncontrada = i + 1;
+          break;
+        }
+      } else if (!telBusca && nomeBusca && n === nomeBusca) {
+        linhaEncontrada = i + 1;
+        break;
+      }
+    }
+
+    const novoNome = String(body.nome_lead || body.nome || "").trim();
+    const novoTel = limparTelefone(body.telefone);
+    const novoCurso = String(body.curso_interesse || body.curso || "Barbeiro").trim();
+    const novoStatus = String(body.status_funil || "Novo").trim();
+    const novaDataBR = formatarDataBR(body.data_entrada) || Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy");
+
+    if (linhaEncontrada !== -1) {
+      if (novaDataBR) sheet.getRange(linhaEncontrada, 1).setValue(novaDataBR);
+      if (novoNome) sheet.getRange(linhaEncontrada, 2).setValue(novoNome);
+      if (novoTel) sheet.getRange(linhaEncontrada, 3).setValue(novoTel);
+      if (novoCurso) sheet.getRange(linhaEncontrada, 4).setValue(novoCurso);
+      if (novoStatus) sheet.getRange(linhaEncontrada, 5).setValue(novoStatus);
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        action: "editar_lead",
+        linha: linhaEncontrada
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      // Se não encontrou linha existente, cria como nova linha
+      const linhaDestino = obterPrimeiraLinhaVazia(sheet);
+      const valoresLinha = [[novaDataBR, novoNome, novoTel, novoCurso, novoStatus, "", "", ""]];
+      sheet.getRange(linhaDestino, 1, 1, 8).setValues(valoresLinha);
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        action: "editar_lead_novo",
+        linha: linhaDestino
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // Ação 4: Excluir Lead (Remove a linha exata da planilha)
+  if (acao === "excluir_lead") {
+    const telAlvo = limparTelefone(body.telefone);
+    const cursoAlvo = String(body.curso || body.curso_interesse || "").trim().toLowerCase();
+    const nomeAlvo = String(body.nome_lead || body.nome || "").trim().toLowerCase();
+
+    const dadosB = sheet.getRange("B:B").getValues(); // Nome
+    const dadosC = sheet.getRange("C:C").getValues(); // Telefone
+    const dadosD = sheet.getRange("D:D").getValues(); // Curso
+
+    let linhaEncontrada = -1;
+    for (let i = 1; i < dadosC.length; i++) {
+      const t = limparTelefone(dadosC[i][0]);
+      const c = String(dadosD[i][0] || "").trim().toLowerCase();
+      const n = String(dadosB[i][0] || "").trim().toLowerCase();
+
+      if (telAlvo && t === telAlvo) {
+        if (!cursoAlvo || c.indexOf(cursoAlvo) !== -1 || cursoAlvo.indexOf(c) !== -1) {
+          linhaEncontrada = i + 1;
+          break;
+        }
+      } else if (!telAlvo && nomeAlvo && n === nomeAlvo) {
         linhaEncontrada = i + 1;
         break;
       }
