@@ -34,7 +34,7 @@ function doPost(e) {
     const data = body ? JSON.parse(body) : {};
 
     // 1. SE FOR REQUISIÇÃO DO PAINEL DE COBRANÇA
-    if (data.action === "salvar_aluno" || data.action === "editar_aluno" || data.action === "novo_aluno" || data.action === "marcar_pago") {
+    if (data.action === "salvar_aluno" || data.action === "editar_aluno" || data.action === "novo_aluno" || data.action === "marcar_pago" || data.action === "excluir_aluno") {
       return processarCobranca(doc, data);
     }
 
@@ -141,7 +141,50 @@ function processarCobranca(doc, body) {
     }
   }
 
-  // Ação B: Cadastrar Novo Aluno ou Editar Existente
+  // Ação B: Excluir Aluno (Remove a linha exata da planilha)
+  if (acao === "excluir_aluno") {
+    const telAlvo = limparTelefone(body.telefone_whatsapp || body.telefone);
+    const cursoAlvo = String(body.curso || "").trim().toLowerCase();
+    const nomeAlvo = String(body.nome_aluno || body.nome || "").trim().toLowerCase();
+
+    const dadosA = sheet.getRange("A:A").getValues();
+    const dadosB = sheet.getRange("B:B").getValues();
+    const dadosC = sheet.getRange("C:C").getValues();
+
+    let linhaEncontrada = -1;
+    for (let i = 1; i < dadosB.length; i++) {
+      const n = String(dadosA[i][0] || "").trim().toLowerCase();
+      const t = limparTelefone(dadosB[i][0]);
+      const c = String(dadosC[i][0] || "").trim().toLowerCase();
+
+      if (telAlvo && t === telAlvo) {
+        if (!cursoAlvo || c.indexOf(cursoAlvo) !== -1 || cursoAlvo.indexOf(c) !== -1) {
+          linhaEncontrada = i + 1;
+          break;
+        }
+      } else if (!telAlvo && nomeAlvo && n === nomeAlvo) {
+        linhaEncontrada = i + 1;
+        break;
+      }
+    }
+
+    if (linhaEncontrada !== -1) {
+      sheet.deleteRow(linhaEncontrada);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        action: "excluir_aluno",
+        linha: linhaEncontrada,
+        message: "Aluno excluído com sucesso da planilha"
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: "Aluno não localizado na planilha para exclusão"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // Ação C: Cadastrar Novo Aluno ou Editar Existente
   const nome = String(body.nome_aluno || body.nome || "").trim();
   const tel = limparTelefone(body.telefone_whatsapp || body.telefone);
   const curso = String(body.curso || "Barbeiro").trim();

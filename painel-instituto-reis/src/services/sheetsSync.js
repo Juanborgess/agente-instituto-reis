@@ -43,3 +43,16 @@ export async function marcarPagoNaPlanilha(telefone, curso) {
     curso
   })
 }
+
+/**
+ * Exclui o aluno diretamente da planilha.
+ */
+export async function excluirAlunoNaPlanilha(telefone, curso, nome) {
+  return sincronizarComPlanilha({
+    action: 'excluir_aluno',
+    telefone_whatsapp: telefone,
+    curso: curso,
+    nome_aluno: nome
+  })
+}
+

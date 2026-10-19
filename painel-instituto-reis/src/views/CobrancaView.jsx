@@ -245,6 +245,10 @@ export default function CobrancaView() {
           setAlunos(prev => prev.map(a => a.id === atualizado.id ? atualizado : a))
           mostrarToast(`Dados de ${atualizado.nome_aluno} atualizados com sucesso!`)
         }}
+        onAlunoExcluido={(idExcluido) => {
+          setAlunos(prev => prev.filter(a => a.id !== idExcluido))
+          mostrarToast("Aluno excluído com sucesso do painel e da planilha!")
+        }}
       />
 
       {/* HEADER DA SEÇÃO & AÇÕES */}

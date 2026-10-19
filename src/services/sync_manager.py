@@ -426,3 +426,42 @@ def atualizar_aluno_planilha(telefone_busca: str, curso_busca: str, novos_dados:
         print(f"[Google Sheets] Erro ao atualizar aluno na planilha: {e}")
         return {"sucesso": False, "erro": str(e)}
 
+def excluir_aluno_planilha(telefone: str, curso: str = None, nome_aluno: str = None) -> dict:
+    """
+    Localiza o aluno na planilha pelo telefone/curso/nome e remove sua linha,
+    deslocando as linhas abaixo para cima e mantendo a planilha limpa.
+    """
+    try:
+        planilha = obter_planilha_sheets()
+        aba = planilha.worksheet(ABA_COBRANCA)
+        tel_alvo = limpar_telefone(telefone)
+        curso_alvo = (curso or "").strip().lower()
+        nome_alvo = (nome_aluno or "").strip().lower()
+
+        linhas = aba.get_all_values()
+        linha_encontrada = None
+
+        for idx, linha in enumerate(linhas[1:], start=2):
+            nome_linha = (linha[0] if len(linha) > 0 else "").strip().lower()
+            tel_linha = limpar_telefone(linha[1] if len(linha) > 1 else "")
+            curso_linha = (linha[2] if len(linha) > 2 else "").strip().lower()
+
+            if tel_alvo and tel_linha == tel_alvo:
+                if not curso_alvo or curso_alvo in curso_linha or curso_linha in curso_alvo:
+                    linha_encontrada = idx
+                    break
+            elif not tel_alvo and nome_alvo and nome_alvo == nome_linha:
+                linha_encontrada = idx
+                break
+
+        if linha_encontrada:
+            aba.delete_rows(linha_encontrada)
+            print(f"[Google Sheets] Aluno na linha {linha_encontrada} excluído com sucesso.")
+            return {"sucesso": True, "linha": linha_encontrada}
+        else:
+            return {"sucesso": False, "erro": "Aluno não localizado na planilha para exclusão"}
+    except Exception as e:
+        print(f"[Google Sheets] Erro ao excluir aluno da planilha: {e}")
+        return {"sucesso": False, "erro": str(e)}
+
+

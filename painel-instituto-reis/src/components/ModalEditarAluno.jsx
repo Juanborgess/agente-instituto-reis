@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { X, Edit3, Calendar, Phone, BookOpen, User, Check, AlertCircle, DollarSign, Bookmark } from 'lucide-react'
-import { sincronizarComPlanilha } from '../services/sheetsSync'
+import { X, Edit3, Calendar, Phone, BookOpen, User, Check, AlertCircle, DollarSign, Bookmark, Trash2 } from 'lucide-react'
+import { sincronizarComPlanilha, excluirAlunoNaPlanilha } from '../services/sheetsSync'
 
 export const CURSOS_OFICIAIS = [
   'Barbeiro',
@@ -20,7 +20,7 @@ export const STATUS_OFICIAIS = [
   'DESISTIU'
 ]
 
-export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtualizado }) {
+export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtualizado, onAlunoExcluido }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [curso, setCurso] = useState('Barbeiro')
@@ -29,6 +29,7 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
   const [valorParcela, setValorParcela] = useState('')
   const [parcelaAtual, setParcelaAtual] = useState('')
   const [loading, setLoading] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
 
   useEffect(() => {
@@ -131,6 +132,42 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
       setErro('Falha de conexão ao salvar alterações.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExcluir = async () => {
+    const confirmou = window.confirm(
+      `Deseja realmente excluir o aluno "${aluno.nome_aluno}"?\n\nEsta ação removerá o aluno tanto do painel quanto da planilha Google Sheets permanentemente.`
+    )
+    if (!confirmou) return
+
+    setExcluindo(true)
+    setErro('')
+
+    try {
+      // 1. Remove do Supabase
+      const { error } = await supabase
+        .from('alunos_cobranca')
+        .delete()
+        .eq('id', aluno.id)
+
+      if (error) {
+        setErro(error.message)
+        setExcluindo(false)
+        return
+      }
+
+      // 2. Remove da planilha Google Sheets em segundo plano
+      excluirAlunoNaPlanilha(aluno.telefone_whatsapp, aluno.curso, aluno.nome_aluno)
+
+      if (onAlunoExcluido) {
+        onAlunoExcluido(aluno.id)
+      }
+      onClose()
+    } catch (err) {
+      setErro('Erro ao excluir o aluno.')
+    } finally {
+      setExcluindo(false)
     }
   }
 
@@ -300,29 +337,48 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
           </div>
 
           {/* Botões de Ação */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-white/10">
+            {/* Botão de Excluir Aluno */}
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              onClick={handleExcluir}
+              disabled={loading || excluindo}
+              className="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+              title="Excluir Aluno do Painel e da Planilha"
             >
-              Cancelar
+              {excluindo ? (
+                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              <span>Excluir Aluno</span>
             </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-bold shadow-lg shadow-brand-600/30 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Salvar Alterações</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading || excluindo}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading || excluindo}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-bold shadow-lg shadow-brand-600/30 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Salvar Alterações</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
