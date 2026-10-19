@@ -202,6 +202,10 @@ function processarCobranca(doc, body) {
 // 3. MÓDULO COBRANÇA: PLANILHA -> SUPABASE & PAINEL (Gatilho onEdit em tempo real)
 // ==============================================================================
 function onEdit(e) {
+  aoEditarPlanilha(e);
+}
+
+function aoEditarPlanilha(e) {
   try {
     if (!e || !e.range) return;
     const sheet = e.range.getSheet();
@@ -214,7 +218,7 @@ function onEdit(e) {
 
     sincronizarLinhaParaSupabase(sheet, linha);
   } catch (err) {
-    Logger.log("Erro no onEdit: " + err);
+    Logger.log("Erro no aoEditarPlanilha: " + err);
   }
 }
 
