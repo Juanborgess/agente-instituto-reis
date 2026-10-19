@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   Trophy, Search, RefreshCw, MessageCircle, Phone, 
-  MapPin, Calendar, User, Eye, UserPlus, Sparkles, Filter, CheckCircle2, AlertCircle, Download
+  MapPin, Calendar, User, Eye, UserPlus, Sparkles, Filter, CheckCircle2, AlertCircle, Download,
+  X, RotateCcw
 } from 'lucide-react'
 import ModalDetalhesParticipante from '../components/ModalDetalhesParticipante'
 import ModalSorteador from '../components/ModalSorteador'
@@ -131,6 +132,66 @@ export default function SorteioView() {
     })
   }, [participantes, busca, filtroCurso])
 
+  // Contagem de participantes já sorteados
+  const totalSorteados = useMemo(() => {
+    return participantes.filter(p => p.sorteado).length
+  }, [participantes])
+
+  // Desmarcar ou marcar participante específico como sorteado
+  const handleToggleSorteado = async (participante) => {
+    const novoStatus = !participante.sorteado
+    const msg = novoStatus
+      ? `Deseja marcar #${participante.numero_participante} ${participante.nome_completo} como SORTEADO?`
+      : `Deseja remover o status de "Sorteado" de #${participante.numero_participante} ${participante.nome_completo} para permitir que ele concorra novamente?`
+
+    if (!window.confirm(msg)) return
+
+    try {
+      const { error } = await supabase
+        .from('sorteio_participantes')
+        .update({ sorteado: novoStatus })
+        .eq('id', participante.id)
+
+      if (!error) {
+        setParticipantes(prev => prev.map(p => p.id === participante.id ? { ...p, sorteado: novoStatus } : p))
+        mostrarToast(novoStatus ? `Participante #${participante.numero_participante} marcado como sorteado!` : `Status de sorteado removido de #${participante.numero_participante}!`)
+      } else {
+        mostrarToast('Erro ao atualizar: ' + error.message)
+      }
+    } catch (err) {
+      mostrarToast('Falha na conexão ao atualizar status.')
+    }
+  }
+
+  // Zerar todos os sorteados para recomeçar o sorteio do zero
+  const handleResetarSorteioCompleto = async () => {
+    if (totalSorteados === 0) {
+      mostrarToast('Nenhum participante está marcado como sorteado.')
+      return
+    }
+
+    const confirmou = window.confirm(
+      `⚠️ REINICIAR SORTEIO DO ZERO\n\nExistem ${totalSorteados} participante(s) marcado(s) como sorteados atualmente.\n\nDeseja remover o status de sorteado de TODOS eles para começar um novo sorteio limpo do zero?`
+    )
+    if (!confirmou) return
+
+    try {
+      const { error } = await supabase
+        .from('sorteio_participantes')
+        .update({ sorteado: false })
+        .eq('sorteado', true)
+
+      if (!error) {
+        setParticipantes(prev => prev.map(p => ({ ...p, sorteado: false })))
+        mostrarToast('🎉 Sorteio zerado com sucesso! Todos os participantes estão elegíveis novamente.')
+      } else {
+        mostrarToast('Erro ao zerar sorteio: ' + error.message)
+      }
+    } catch (err) {
+      mostrarToast('Falha na conexão ao resetar sorteio.')
+    }
+  }
+
   const handleExportarSorteio = () => {
     if (participantesFiltrados.length === 0) {
       mostrarToast('Nenhum participante na listagem para exportar.')
@@ -166,6 +227,7 @@ export default function SorteioView() {
         participante={participanteSelecionado}
         isOpen={!!participanteSelecionado}
         onClose={() => setParticipanteSelecionado(null)}
+        onToggleSorteado={(p) => handleToggleSorteado(p)}
         onEnviarParaCRM={(p) => {
           setParticipantes(prev => prev.map(item => item.id === p.id ? { ...item, enviado_crm: true } : item))
           mostrarToast(`Participante ${p.nome_completo} enviado ao CRM com sucesso!`)
@@ -178,6 +240,7 @@ export default function SorteioView() {
         isOpen={modalSorteadorAberto}
         onClose={() => setModalSorteadorAberto(false)}
         participantes={participantes}
+        onResetarSorteio={handleResetarSorteioCompleto}
         onGanhadorSorteado={(ganhador) => {
           setParticipantes(prev => prev.map(p => p.id === ganhador.id ? { ...p, sorteado: true } : p))
           mostrarToast(`🎉 Sorteado com sucesso: #${ganhador.numero_participante} ${ganhador.nome_completo}!`)
@@ -192,13 +255,30 @@ export default function SorteioView() {
             <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
               {metricas.total} Participantes
             </span>
+            {totalSorteados > 0 && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold flex items-center gap-1">
+                <Trophy className="w-3 h-3 text-amber-400" />
+                {totalSorteados} Sorteado{totalSorteados > 1 ? 's' : ''}
+              </span>
+            )}
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
             Respostas do formulário externo sincronizadas em tempo real com o Google Sheets
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {totalSorteados > 0 && (
+            <button
+              onClick={handleResetarSorteioCompleto}
+              className="py-2.5 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-[0.98]"
+              title="Zerar todos os sorteados para recomeçar o sorteio do zero"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Zerar Sorteados ({totalSorteados})</span>
+            </button>
+          )}
+
           <button
             onClick={handleExportarSorteio}
             className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold"
@@ -353,10 +433,20 @@ export default function SorteioView() {
                     </div>
 
                     {p.sorteado ? (
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                        <Trophy className="w-3 h-3" />
-                        SORTEADO
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleSorteado(p)
+                        }}
+                        title="Clique para desmarcar este participante como sorteado"
+                        className="group text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                      >
+                        <Trophy className="w-3 h-3 group-hover:hidden text-amber-400" />
+                        <X className="w-3 h-3 hidden group-hover:inline text-red-400" />
+                        <span className="group-hover:hidden">SORTEADO</span>
+                        <span className="hidden group-hover:inline font-bold">Desmarcar</span>
+                      </button>
                     ) : p.enviado_crm ? (
                       <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
                         NO CRM

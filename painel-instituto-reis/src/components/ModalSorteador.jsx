@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { Trophy, Sparkles, X, RotateCcw, MessageCircle, CheckCircle2, User, Phone, MapPin } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-export default function ModalSorteador({ isOpen, onClose, participantes, onGanhadorSorteado }) {
+export default function ModalSorteador({ isOpen, onClose, participantes, onGanhadorSorteado, onResetarSorteio }) {
   const [sorteando, setSorteando] = useState(false)
   const [ganhador, setGanhador] = useState(null)
   const [destaqueAtual, setDestaqueAtual] = useState(null)
   const [filtroCurso, setFiltroCurso] = useState('todos')
+  const [ignorarJaSorteados, setIgnorarJaSorteados] = useState(true)
 
   useEffect(() => {
     if (isOpen) {
@@ -17,9 +18,14 @@ export default function ModalSorteador({ isOpen, onClose, participantes, onGanha
 
   if (!isOpen) return null
 
+  const totalJaSorteados = participantes.filter(p => p.sorteado).length
+
   // Elegíveis para o sorteio
   const elegiveis = participantes.filter(p => {
     if (filtroCurso !== 'todos' && p.curso_interesse !== filtroCurso) {
+      return false
+    }
+    if (ignorarJaSorteados && p.sorteado) {
       return false
     }
     return true
@@ -113,6 +119,32 @@ export default function ModalSorteador({ isOpen, onClose, participantes, onGanha
                 {curso} ({participantes.filter(p => p.curso_interesse === curso).length})
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Opções de exclusão de já sorteados e reset rápido */}
+        {!ganhador && !sorteando && (
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-3 text-xs bg-slate-900/60 p-2.5 rounded-2xl border border-white/5">
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white select-none">
+              <input
+                type="checkbox"
+                checked={ignorarJaSorteados}
+                onChange={(e) => setIgnorarJaSorteados(e.target.checked)}
+                className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-white/20 bg-slate-900 cursor-pointer"
+              />
+              <span>Não sortear quem já ganhou ({totalJaSorteados} sorteados)</span>
+            </label>
+
+            {totalJaSorteados > 0 && onResetarSorteio && (
+              <button
+                type="button"
+                onClick={() => onResetarSorteio()}
+                className="px-2.5 py-1 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Zerar Sorteados</span>
+              </button>
+            )}
           </div>
         )}
 

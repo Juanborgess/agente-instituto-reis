@@ -9,7 +9,8 @@ export default function ModalDetalhesParticipante({
   participante, 
   isOpen, 
   onClose, 
-  onEnviarParaCRM 
+  onEnviarParaCRM,
+  onToggleSorteado
 }) {
   if (!isOpen || !participante) return null
 
@@ -76,11 +77,26 @@ export default function ModalDetalhesParticipante({
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20">
                 {participante.curso_interesse || 'Curso Geral'}
               </span>
-              {participante.sorteado && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+              {participante.sorteado ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleSorteado && onToggleSorteado(participante)}
+                  title="Clique para desmarcar como sorteado"
+                  className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40 flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Sorteado (Clique p/ Desmarcar)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onToggleSorteado && onToggleSorteado(participante)}
+                  title="Clique para marcar como sorteado manualmente"
+                  className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-white/10 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-500/30 flex items-center gap-1.5 transition-all cursor-pointer"
+                >
                   <Trophy className="w-3.5 h-3.5" />
-                  Sorteado
-                </span>
+                  <span>Marcar como Sorteado</span>
+                </button>
               )}
               {participante.enviado_crm && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">

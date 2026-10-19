@@ -150,11 +150,24 @@ PRINCIPAIS FUNCIONALIDADES:
   - Fica no topo direito (botão dourado).
   - Você pode filtrar se quer sortear entre "Todos" ou apenas os inscritos de 
     um curso específico (ex: sortear apenas quem quer Barbeiro).
+  - Possui a opção inteligente marcada por padrão: "Não sortear quem já ganhou", 
+    garantindo que uma pessoa sorteada não ganhe repetidas vezes.
   - Ao clicar em "Girar Roleta e Sortear", o sistema faz uma animação ao vivo 
     girando os números e nomes dos participantes de forma aleatória e auditada.
   - Ao parar no vencedor, exibe a tela de comemoração com o Número, Nome e um 
     botão direto de "Notificar Vencedor no WhatsApp" para dar a notícia na hora!
   - O vencedor fica marcado automaticamente com a etiqueta verde "SORTEADO".
+
+• 🔄 COMO DESMARCAR UM SORTEADO OU REINICIAR O SORTEIO DO ZERO:
+  - Para desmarcar UMA pessoa específica (ex: fez teste ou o sorteado não cumpriu as regras):
+    Basta passar o mouse (ou tocar no celular) no badge verde "🏆 SORTEADO" no card 
+    dele. O botão mudará para "✕ Desmarcar". Clique nele e confirme. O status volta 
+    ao normal e a pessoa fica apta a concorrer novamente.
+    (Você também pode desmarcar/marcar clicando no botão "Ver Respostas" dele).
+  - Para ZERAR O SORTEIO INTEIRO (começar do zero para uma nova semana ou evento):
+    Quando houver participantes sorteados, aparecerá no topo da tela o botão vermelho:
+    "🔄 Zerar Sorteados (X)". Ao clicar e confirmar, o sistema limpa o status de todos 
+    os ganhadores de uma vez só, deixando toda a base pronta para novos sorteios!
 
 • Botão "Ver Respostas" (Pesquisa de Perfil Completa):
   - Cada participante tem esse botão no card. Ao clicar, abre o formulário completo 
