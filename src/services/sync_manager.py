@@ -334,3 +334,95 @@ def criar_lead_crm_hibrido(nome: str, telefone: str, curso: str) -> dict:
         print(f"Erro ao replicar novo lead para o Google Sheets: {e}")
 
     return res.data[0] if res.data else {}
+
+def formatar_data_br(data_str) -> str:
+    """Converte datas em YYYY-MM-DD para DD/MM/AAAA."""
+    if not data_str:
+        return ""
+    texto = str(data_str).strip()
+    if "-" in texto:
+        partes = texto.split("T")[0].split("-")
+        if len(partes) == 3:
+            return f"{partes[2]}/{partes[1]}/{partes[0]}"
+    return texto
+
+def obter_primeira_linha_vazia_planilha(aba) -> int:
+    """
+    Escaneia a coluna A para encontrar a PRIMEIRA linha exatamente vazia.
+    Garante que novos cadastros nunca sejam jogados no final de linhas em branco pré-existentes.
+    """
+    col_a = aba.col_values(1)
+    for idx, val in enumerate(col_a[1:], start=2):
+        if not val or not str(val).strip():
+            return idx
+    return len(col_a) + 1
+
+def adicionar_aluno_planilha_linha_exata(dados_aluno: dict) -> dict:
+    """
+    Adiciona um novo aluno na linha exata vazia da planilha Cobranca_Alunos.
+    Garante a formatação correta de data (DD/MM/AAAA) e status.
+    """
+    try:
+        planilha = obter_planilha_sheets()
+        aba = planilha.worksheet(ABA_COBRANCA)
+        linha_vazia = obter_primeira_linha_vazia_planilha(aba)
+
+        nome = str(dados_aluno.get("nome_aluno", "")).strip()
+        tel = limpar_telefone(dados_aluno.get("telefone_whatsapp", ""))
+        curso = str(dados_aluno.get("curso", "Barbeiro")).strip()
+        venc_br = formatar_data_br(dados_aluno.get("vencimento_atual", ""))
+        status = str(dados_aluno.get("status_pagamento", "PENDENTE")).strip().upper()
+        valor = dados_aluno.get("valor_parcela", "")
+        parcela = str(dados_aluno.get("parcela_atual", "")).strip()
+
+        valores = [[nome, tel, curso, venc_br, status, valor, parcela]]
+        aba.update(range_name=f"A{linha_vazia}:G{linha_vazia}", values=valores)
+        print(f"[Google Sheets] Aluno {nome} inserido com sucesso na linha exata {linha_vazia}.")
+        return {"sucesso": True, "linha": linha_vazia, "operacao": "inserido"}
+    except Exception as e:
+        print(f"[Google Sheets] Erro ao adicionar aluno na linha exata: {e}")
+        return {"sucesso": False, "erro": str(e)}
+
+def atualizar_aluno_planilha(telefone_busca: str, curso_busca: str, novos_dados: dict) -> dict:
+    """
+    Localiza o aluno na planilha pelo telefone/curso e atualiza suas células exatas (A:G).
+    Se não encontrar, insere na primeira linha vazia.
+    """
+    try:
+        planilha = obter_planilha_sheets()
+        aba = planilha.worksheet(ABA_COBRANCA)
+        tel_alvo = limpar_telefone(telefone_busca)
+        curso_alvo = (curso_busca or "").strip().lower()
+
+        linhas = aba.get_all_values()
+        linha_encontrada = None
+
+        for idx, linha in enumerate(linhas[1:], start=2):
+            tel_linha = limpar_telefone(linha[1] if len(linha) > 1 else "")
+            curso_linha = (linha[2] if len(linha) > 2 else "").strip().lower()
+
+            if tel_linha == tel_alvo:
+                if not curso_alvo or curso_alvo in curso_linha or curso_linha in curso_alvo:
+                    linha_encontrada = idx
+                    break
+
+        nome = str(novos_dados.get("nome_aluno", "")).strip()
+        tel = limpar_telefone(novos_dados.get("telefone_whatsapp", tel_alvo))
+        curso = str(novos_dados.get("curso", curso_busca or "Barbeiro")).strip()
+        venc_br = formatar_data_br(novos_dados.get("vencimento_atual", ""))
+        status = str(novos_dados.get("status_pagamento", "PENDENTE")).strip().upper()
+        valor = novos_dados.get("valor_parcela", "")
+        parcela = str(novos_dados.get("parcela_atual", "")).strip()
+
+        valores = [[nome, tel, curso, venc_br, status, valor, parcela]]
+
+        if linha_encontrada:
+            aba.update(range_name=f"A{linha_encontrada}:G{linha_encontrada}", values=valores)
+            print(f"[Google Sheets] Aluno {nome} atualizado na linha {linha_encontrada}.")
+            return {"sucesso": True, "linha": linha_encontrada, "operacao": "atualizado"}
+        else:
+            return adicionar_aluno_planilha_linha_exata(novos_dados)
+    except Exception as e:
+        print(f"[Google Sheets] Erro ao atualizar aluno na planilha: {e}")
+        return {"sucesso": False, "erro": str(e)}
+

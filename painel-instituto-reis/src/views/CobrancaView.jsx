@@ -2,8 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   Search, RefreshCw, CheckCircle2, MessageCircle, AlertTriangle, 
-  Calendar, CreditCard, User, BookOpen, Clock, Check, Filter
+  Calendar, CreditCard, User, BookOpen, Clock, Check, Filter,
+  UserPlus, Edit3, XCircle
 } from 'lucide-react'
+import ModalNovoAluno from '../components/ModalNovoAluno'
+import ModalEditarAluno from '../components/ModalEditarAluno'
+import { marcarPagoNaPlanilha } from '../services/sheetsSync'
 
 export default function CobrancaView() {
   const [alunos, setAlunos] = useState([])
@@ -12,6 +16,10 @@ export default function CobrancaView() {
   const [busca, setBusca] = useState('')
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
+
+  // Modais
+  const [modalNovoAberto, setModalNovoAberto] = useState(false)
+  const [alunoParaEditar, setAlunoParaEditar] = useState(null)
 
   const carregarAlunos = async () => {
     setLoading(true)
@@ -23,6 +31,8 @@ export default function CobrancaView() {
 
       if (!error && data) {
         setAlunos(data)
+      } else if (error) {
+        console.error("Erro Supabase:", error)
       }
     } catch (err) {
       console.error("Erro ao carregar alunos:", err)
@@ -33,6 +43,24 @@ export default function CobrancaView() {
 
   useEffect(() => {
     carregarAlunos()
+
+    // Conexão em tempo real com o Supabase (qualquer alteração na planilha que chegue ao Supabase reflete aqui ao vivo)
+    const channel = supabase
+      .channel('realtime_alunos_cobranca')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos_cobranca' }, () => {
+        carregarAlunos()
+      })
+      .subscribe()
+
+    // Atualização de segurança periódica a cada 20 segundos
+    const intervalo = setInterval(() => {
+      carregarAlunos()
+    }, 20000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(intervalo)
+    }
   }, [])
 
   // Calcula a diferença de dias entre hoje e o vencimento
@@ -60,14 +88,17 @@ export default function CobrancaView() {
       const { error } = await supabase
         .from('alunos_cobranca')
         .update({ 
-          status_pagamento: 'CONCLUÍDO',
+          status_pagamento: 'PAGO',
           updated_at: new Date().toISOString()
         })
         .eq('id', aluno.id)
 
       if (!error) {
-        setAlunos(prev => prev.map(a => a.id === aluno.id ? { ...a, status_pagamento: 'CONCLUÍDO' } : a))
-        mostrarToast(`Pagamento de ${aluno.nome_aluno.split(' ')[0]} registrado com sucesso!`)
+        setAlunos(prev => prev.map(a => a.id === aluno.id ? { ...a, status_pagamento: 'PAGO' } : a))
+        mostrarToast(`Pagamento de ${aluno.nome_aluno.split(' ')[0]} registrado como PAGO!`)
+
+        // Sincroniza em segundo plano com a planilha Google Sheets
+        marcarPagoNaPlanilha(aluno.telefone_whatsapp, aluno.curso)
       }
     } catch (err) {
       mostrarToast("Erro ao atualizar pagamento.")
@@ -84,7 +115,6 @@ export default function CobrancaView() {
   // Filtragem dos alunos
   const alunosFiltrados = useMemo(() => {
     return alunos.filter(aluno => {
-      // Filtro de busca textual
       const termo = busca.toLowerCase()
       const matchBusca = 
         aluno.nome_aluno?.toLowerCase().includes(termo) ||
@@ -94,22 +124,27 @@ export default function CobrancaView() {
       if (!matchBusca) return false
 
       const diffDias = calcularDiferencaDias(aluno.vencimento_atual)
-      const isConcluido = aluno.status_pagamento?.toUpperCase().includes('CONCLU') || aluno.status_pagamento?.toUpperCase().includes('PAGO')
+      const st = String(aluno.status_pagamento || '').toUpperCase()
+      const isPagoOuConcluido = st.includes('CONCLU') || st.includes('PAGO')
+      const isDesistiu = st.includes('DESIST')
 
       if (filtroAba === 'hoje') {
-        return diffDias === 0 && !isConcluido
+        return diffDias === 0 && !isPagoOuConcluido && !isDesistiu
       }
       if (filtroAba === 'd1') {
-        return diffDias === 1 && !isConcluido
+        return diffDias === 1 && !isPagoOuConcluido && !isDesistiu
       }
       if (filtroAba === 'd5') {
-        return diffDias === 5 && !isConcluido
+        return diffDias === 5 && !isPagoOuConcluido && !isDesistiu
       }
       if (filtroAba === 'concluidos') {
-        return isConcluido
+        return isPagoOuConcluido
+      }
+      if (filtroAba === 'desistiu') {
+        return isDesistiu
       }
       if (filtroAba === 'pendentes') {
-        return !isConcluido
+        return !isPagoOuConcluido && !isDesistiu
       }
       return true
     })
@@ -117,12 +152,17 @@ export default function CobrancaView() {
 
   // Contadores para as abas
   const contadores = useMemo(() => {
-    let hoje = 0, d1 = 0, d5 = 0, concluidos = 0, pendentes = 0
+    let hoje = 0, d1 = 0, d5 = 0, concluidos = 0, desistiu = 0, pendentes = 0
     alunos.forEach(a => {
-      const isConcluido = a.status_pagamento?.toUpperCase().includes('CONCLU') || a.status_pagamento?.toUpperCase().includes('PAGO')
+      const st = String(a.status_pagamento || '').toUpperCase()
+      const isPago = st.includes('CONCLU') || st.includes('PAGO')
+      const isDesistiu = st.includes('DESIST')
       const diff = calcularDiferencaDias(a.vencimento_atual)
-      if (isConcluido) {
+
+      if (isPago) {
         concluidos++
+      } else if (isDesistiu) {
+        desistiu++
       } else {
         pendentes++
         if (diff === 0) hoje++
@@ -130,7 +170,7 @@ export default function CobrancaView() {
         if (diff === 5) d5++
       }
     })
-    return { hoje, d1, d5, concluidos, pendentes, total: alunos.length }
+    return { hoje, d1, d5, concluidos, desistiu, pendentes, total: alunos.length }
   }, [alunos])
 
   const formatarDataBR = (dataIso) => {
@@ -145,24 +185,59 @@ export default function CobrancaView() {
 
   const formatarTelefone = (tel) => {
     if (!tel) return ''
-    const num = tel.replace(/\D/g, '')
+    const num = String(tel).replace(/\D/g, '')
     if (num.length === 13) {
       return `+${num.slice(0, 2)} (${num.slice(2, 4)}) ${num.slice(4, 9)}-${num.slice(9)}`
     }
+    if (num.length === 11) {
+      return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7)}`
+    }
     return tel
+  }
+
+  // Cor do badge por curso oficial
+  const getCorCurso = (curso) => {
+    const c = String(curso || '').toLowerCase()
+    if (c.includes('barbeiro')) return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+    if (c.includes('tran')) return 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+    if (c.includes('lash')) return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    if (c.includes('sobrancelha')) return 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+    if (c.includes('brow')) return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+    return 'bg-slate-800 text-slate-300 border-slate-700'
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 md:pb-12">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed top-20 right-4 z-50 glass-panel border border-emerald-500/30 bg-emerald-950/80 text-emerald-200 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+        <div className="fixed top-20 right-4 z-50 glass-panel border border-emerald-500/30 bg-emerald-950/90 text-emerald-200 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-semibold">{toastMsg}</span>
         </div>
       )}
 
-      {/* HEADER DA SEÇÃO & CARDS DE RESUMO */}
+      {/* Modal de Novo Aluno */}
+      <ModalNovoAluno
+        isOpen={modalNovoAberto}
+        onClose={() => setModalNovoAberto(false)}
+        onAlunoCriado={(novo) => {
+          setAlunos(prev => [novo, ...prev])
+          mostrarToast(`Aluno ${novo.nome_aluno} cadastrado com sucesso!`)
+        }}
+      />
+
+      {/* Modal de Editar Aluno */}
+      <ModalEditarAluno
+        aluno={alunoParaEditar}
+        isOpen={!!alunoParaEditar}
+        onClose={() => setAlunoParaEditar(null)}
+        onAlunoAtualizado={(atualizado) => {
+          setAlunos(prev => prev.map(a => a.id === atualizado.id ? atualizado : a))
+          mostrarToast(`Dados de ${atualizado.nome_aluno} atualizados com sucesso!`)
+        }}
+      />
+
+      {/* HEADER DA SEÇÃO & AÇÕES */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
@@ -172,26 +247,36 @@ export default function CobrancaView() {
             </span>
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
-            Acompanhamento de vencimentos e baixa de pagamentos em tempo real
+            Gestão de vencimentos com sincronização em tempo real com o Google Sheets
           </p>
         </div>
 
-        <button
-          onClick={carregarAlunos}
-          disabled={loading}
-          className="self-start sm:self-auto px-4 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Atualizar Dados</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={carregarAlunos}
+            disabled={loading}
+            className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer"
+            title="Recarregar Dados"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            onClick={() => setModalNovoAberto(true)}
+            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-bold shadow-lg shadow-brand-600/30 flex items-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Novo Aluno</span>
+          </button>
+        </div>
       </div>
 
       {/* CARDS DE RESUMO RÁPIDO */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div 
           onClick={() => setFiltroAba('hoje')}
-          className={`glass-card p-4 rounded-2xl border transition-all cursor-pointer ${
-            filtroAba === 'hoje' ? 'border-red-500/50 bg-red-500/10' : 'hover:border-white/10'
+          className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroAba === 'hoje' ? 'border-red-500/50 bg-red-500/10 shadow-lg' : 'hover:border-white/10'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-red-400 mb-1">
@@ -199,13 +284,13 @@ export default function CobrancaView() {
             <AlertTriangle className="w-4 h-4" />
           </div>
           <div className="text-2xl font-black text-white">{contadores.hoje}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Disparo imediato com PIX</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Disparo c/ PIX</div>
         </div>
 
         <div 
           onClick={() => setFiltroAba('d1')}
-          className={`glass-card p-4 rounded-2xl border transition-all cursor-pointer ${
-            filtroAba === 'd1' ? 'border-amber-500/50 bg-amber-500/10' : 'hover:border-white/10'
+          className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroAba === 'd1' ? 'border-amber-500/50 bg-amber-500/10 shadow-lg' : 'hover:border-white/10'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-amber-400 mb-1">
@@ -213,13 +298,13 @@ export default function CobrancaView() {
             <Clock className="w-4 h-4" />
           </div>
           <div className="text-2xl font-black text-white">{contadores.d1}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Lembrete amanhã</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Amanhã (-1d)</div>
         </div>
 
         <div 
           onClick={() => setFiltroAba('d5')}
-          className={`glass-card p-4 rounded-2xl border transition-all cursor-pointer ${
-            filtroAba === 'd5' ? 'border-indigo-500/50 bg-indigo-500/10' : 'hover:border-white/10'
+          className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroAba === 'd5' ? 'border-indigo-500/50 bg-indigo-500/10 shadow-lg' : 'hover:border-white/10'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-indigo-400 mb-1">
@@ -227,34 +312,50 @@ export default function CobrancaView() {
             <Calendar className="w-4 h-4" />
           </div>
           <div className="text-2xl font-black text-white">{contadores.d5}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Aviso prévio</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Pré-aviso</div>
         </div>
 
         <div 
           onClick={() => setFiltroAba('concluidos')}
-          className={`glass-card p-4 rounded-2xl border transition-all cursor-pointer ${
-            filtroAba === 'concluidos' ? 'border-emerald-500/50 bg-emerald-500/10' : 'hover:border-white/10'
+          className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroAba === 'concluidos' ? 'border-emerald-500/50 bg-emerald-500/10 shadow-lg' : 'hover:border-white/10'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 mb-1">
-            <span>PAGOS / CONCLUÍDOS</span>
+            <span>PAGOS</span>
             <CheckCircle2 className="w-4 h-4" />
           </div>
           <div className="text-2xl font-black text-white">{contadores.concluidos}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Alunos em dia</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Em dia</div>
+        </div>
+
+        <div 
+          onClick={() => setFiltroAba('desistiu')}
+          className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer col-span-2 sm:col-span-1 ${
+            filtroAba === 'desistiu' ? 'border-purple-500/50 bg-purple-500/10 shadow-lg' : 'hover:border-white/10'
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-purple-400 mb-1">
+            <span>DESISTIU</span>
+            <XCircle className="w-4 h-4" />
+          </div>
+          <div className="text-2xl font-black text-white">{contadores.desistiu}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Cancelados</div>
         </div>
       </div>
 
-      {/* FILTROS E BUSCA */}
+      {/* FILTROS EM ABAS DE TOQUE E BUSCA */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Abas de Filtro de Toque */}
+        {/* Abas */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
           {[
             { id: 'todos', label: 'Todos', count: contadores.total },
-            { id: 'hoje', label: 'Hoje', count: contadores.hoje, color: 'text-red-400' },
-            { id: 'd1', label: '1 Dia', count: contadores.d1, color: 'text-amber-400' },
-            { id: 'd5', label: '5 Dias', count: contadores.d5, color: 'text-indigo-400' },
-            { id: 'concluidos', label: 'Pagos', count: contadores.concluidos, color: 'text-emerald-400' },
+            { id: 'hoje', label: 'Hoje', count: contadores.hoje },
+            { id: 'd1', label: '1 Dia', count: contadores.d1 },
+            { id: 'd5', label: '5 Dias', count: contadores.d5 },
+            { id: 'pendentes', label: 'Pendentes', count: contadores.pendentes },
+            { id: 'concluidos', label: 'Pagos/Concluídos', count: contadores.concluidos },
+            { id: 'desistiu', label: 'Desistiu', count: contadores.desistiu },
           ].map(tab => (
             <button
               key={tab.id}
@@ -299,17 +400,18 @@ export default function CobrancaView() {
           <CheckCircle2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-white">Nenhum aluno encontrado</h3>
           <p className="text-xs text-slate-400 mt-1">
-            Nenhum registro atende aos filtros selecionados no momento.
+            Nenhum registro atende aos filtros selecionados.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {alunosFiltrados.map((aluno) => {
-            const isConcluido = aluno.status_pagamento?.toUpperCase().includes('CONCLU') || aluno.status_pagamento?.toUpperCase().includes('PAGO')
+            const st = String(aluno.status_pagamento || '').toUpperCase()
+            const isPagoOuConcluido = st.includes('CONCLU') || st.includes('PAGO')
+            const isDesistiu = st.includes('DESIST')
             const diffDias = calcularDiferencaDias(aluno.vencimento_atual)
-            const telLimpo = aluno.telefone_whatsapp?.replace(/\D/g, '')
+            const telLimpo = String(aluno.telefone_whatsapp || '').replace(/\D/g, '')
 
-            // Mensagem pré-formatada para o WhatsApp
             const msgWhats = encodeURIComponent(
               `Olá, ${aluno.nome_aluno.split(' ')[0]}! Tudo bem? Aqui é do Instituto Reis sobre o seu curso de ${aluno.curso}.`
             )
@@ -323,15 +425,19 @@ export default function CobrancaView() {
                 {/* Topo do Card */}
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-slate-800 text-brand-400 border border-brand-500/20">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${getCorCurso(aluno.curso)}`}>
                       {aluno.curso}
                     </span>
 
-                    {/* Badge de Status */}
-                    {isConcluido ? (
+                    {/* Badge de Status Oficial */}
+                    {isPagoOuConcluido ? (
                       <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                         <Check className="w-3 h-3" />
-                        PAGO
+                        {aluno.status_pagamento}
+                      </span>
+                    ) : isDesistiu ? (
+                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        DESISTIU
                       </span>
                     ) : diffDias === 0 ? (
                       <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1 animate-pulse">
@@ -367,12 +473,32 @@ export default function CobrancaView() {
                       <MessageCircle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                       <span>{formatarTelefone(aluno.telefone_whatsapp)}</span>
                     </div>
+
+                    {(aluno.parcela_atual || aluno.valor_parcela > 0) && (
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                        <span>
+                          {aluno.parcela_atual && `Parcela: ${aluno.parcela_atual}`}
+                          {aluno.valor_parcela > 0 && ` (R$ ${aluno.valor_parcela})`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Botões de Ação */}
+                {/* BOTÕES DE AÇÃO: EDITAR + MARCAR PAGO + WHATSAPP */}
                 <div className="pt-3 border-t border-white/5 flex items-center gap-2">
-                  {!isConcluido ? (
+                  {/* Botão de Editar */}
+                  <button
+                    onClick={() => setAlunoParaEditar(aluno)}
+                    className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 transition-all flex items-center justify-center cursor-pointer"
+                    title="Editar Dados e Vencimento"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+
+                  {/* Botão Marcar como Pago */}
+                  {!isPagoOuConcluido && !isDesistiu ? (
                     <button
                       onClick={() => handleMarcarComoPago(aluno)}
                       disabled={processandoId === aluno.id}
@@ -383,16 +509,17 @@ export default function CobrancaView() {
                       ) : (
                         <>
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Marcar como Pago</span>
+                          <span>Marcar Pago</span>
                         </>
                       )}
                     </button>
                   ) : (
-                    <div className="flex-1 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold text-center">
-                      Pagamento Quitado
+                    <div className="flex-1 py-2 px-3 rounded-xl bg-slate-800/40 border border-white/5 text-slate-400 text-xs font-semibold text-center">
+                      {aluno.status_pagamento}
                     </div>
                   )}
 
+                  {/* Botão WhatsApp */}
                   <a
                     href={linkWhatsApp}
                     target="_blank"
