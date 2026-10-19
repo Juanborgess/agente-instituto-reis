@@ -4,6 +4,7 @@ import LoginView from './views/LoginView'
 import Navbar from './components/Navbar'
 import CobrancaView from './views/CobrancaView'
 import CRMView from './views/CRMView'
+import SorteioView from './views/SorteioView'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -62,8 +63,10 @@ export default function App() {
       <main className="flex-1 w-full animate-fadeIn">
         {activeTab === 'cobranca' ? (
           <CobrancaView />
-        ) : (
+        ) : activeTab === 'crm' ? (
           <CRMView />
+        ) : (
+          <SorteioView />
         )}
       </main>
     </div>

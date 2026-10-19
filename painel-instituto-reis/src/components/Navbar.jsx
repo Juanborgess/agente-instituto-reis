@@ -1,7 +1,7 @@
 import React from 'react'
-import { BadgeDollarSign, Users, LogOut, Sparkles } from 'lucide-react'
+import { BadgeDollarSign, Users, LogOut, Sparkles, Trophy } from 'lucide-react'
 
-export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, countCobranca, countCRM }) {
+export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, countCobranca, countCRM, countSorteio }) {
   return (
     <>
       {/* HEADER DESKTOP / TABLET */}
@@ -24,7 +24,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
-                Cobrança & Gestão de Leads
+                Cobrança, CRM & Sorteio QR Code
               </p>
             </div>
           </div>
@@ -68,6 +68,25 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab('sorteio')}
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                activeTab === 'sorteio'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Trophy className="w-4 h-4 text-amber-300" />
+              <span>Sorteio QR Code</span>
+              {countSorteio > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  activeTab === 'sorteio' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-300'
+                }`}>
+                  {countSorteio}
+                </span>
+              )}
+            </button>
           </nav>
 
           {/* Usuário e Logout */}
@@ -92,7 +111,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
       {/* BOTTOM NAVIGATION (MOBILE APENAS) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe">
-        <div className="grid grid-cols-2 h-16">
+        <div className="grid grid-cols-3 h-16">
           <button
             onClick={() => setActiveTab('cobranca')}
             className={`flex flex-col items-center justify-center gap-1 relative transition-all duration-200 ${
@@ -103,7 +122,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
               <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
             )}
             <BadgeDollarSign className="w-5 h-5" />
-            <span className="text-[11px]">Cobrança</span>
+            <span className="text-[10px]">Cobrança</span>
           </button>
 
           <button
@@ -116,10 +135,24 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
               <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
             )}
             <Users className="w-5 h-5" />
-            <span className="text-[11px]">CRM Vendas</span>
+            <span className="text-[10px]">CRM</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('sorteio')}
+            className={`flex flex-col items-center justify-center gap-1 relative transition-all duration-200 ${
+              activeTab === 'sorteio' ? 'text-amber-400 font-bold' : 'text-slate-400 font-medium'
+            }`}
+          >
+            {activeTab === 'sorteio' && (
+              <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-b-full"></span>
+            )}
+            <Trophy className="w-5 h-5" />
+            <span className="text-[10px]">Sorteio</span>
           </button>
         </div>
       </div>
     </>
   )
 }
+

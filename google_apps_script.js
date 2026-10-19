@@ -23,7 +23,7 @@ const SUPABASE_KEY = PROPRIEDADES.getProperty("SUPABASE_KEY") || "";
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("⚡ Painel Instituto Reis")
-    .addItem("🔄 Sincronizar Tudo (Cobrança & CRM)", "sincronizarTudoParaSupabase")
+    .addItem("🔄 Sincronizar Tudo (Cobrança, CRM & Sorteio)", "sincronizarTudoParaSupabase")
     .addItem("🧪 Testar Conexão com Supabase", "testarConexaoSupabase")
     .addItem("🔐 Configurar Chave do Supabase", "solicitarChaveSupabaseAoUsuario")
     .addToUi();
@@ -126,6 +126,13 @@ function processarSorteioQRCode(doc, data) {
   ];
 
   sheet.appendRow(rowData);
+
+  // Sincroniza imediatamente o novo participante com o Supabase e o Painel Web
+  try {
+    sincronizarLinhaSorteioParaSupabase(rowData);
+  } catch (errSync) {
+    Logger.log("Aviso ao sincronizar sorteio para Supabase: " + errSync);
+  }
 
   return ContentService
     .createTextOutput(JSON.stringify({
@@ -463,6 +470,9 @@ function aoEditarPlanilha(e) {
       sincronizarLinhaCobrancaParaSupabase(sheet, linha);
     } else if (nomeAba === ABA_CRM) {
       sincronizarLinhaCrmParaSupabase(sheet, linha);
+    } else if (nomeAba === SHEET_NAME_SORTEIO) {
+      const rowData = sheet.getRange(linha, 1, 1, 16).getValues()[0];
+      sincronizarLinhaSorteioParaSupabase(rowData);
     }
   } catch (err) {
     Logger.log("Erro no aoEditarPlanilha: " + err);
@@ -772,9 +782,100 @@ function sincronizarTudoParaSupabase() {
     }
   }
 
+  // 3. Sincroniza Sorteio QR Code
+  const sheetSorteio = ss.getSheetByName(SHEET_NAME_SORTEIO);
+  let totalSorteio = 0;
+  if (sheetSorteio) {
+    const maxSorteio = sheetSorteio.getLastRow();
+    for (let r = 2; r <= maxSorteio; r++) {
+      const rowData = sheetSorteio.getRange(r, 1, 1, 16).getValues()[0];
+      if (rowData[10] || rowData[12]) { // Nome ou WhatsApp
+        sincronizarLinhaSorteioParaSupabase(rowData);
+        totalSorteio++;
+      }
+    }
+  }
+
   SpreadsheetApp.getUi().alert(
     "✅ Sincronização concluída com sucesso!\n\n" +
     "• Alunos Cobrança sincronizados: " + totalCob + "\n" +
-    "• Leads CRM sincronizados: " + totalCrm
+    "• Leads CRM sincronizados: " + totalCrm + "\n" +
+    "• Participantes Sorteio sincronizados: " + totalSorteio
   );
+}
+
+/**
+ * Sincroniza linha de Sorteio QR Code para a tabela sorteio_participantes
+ */
+function sincronizarLinhaSorteioParaSupabase(rowData) {
+  if (!SUPABASE_KEY) {
+    Logger.log("Aviso: SUPABASE_KEY não configurada nas Propriedades do Script.");
+    return;
+  }
+
+  try {
+    const payload = {
+      numero_participante: parseInt(rowData[0], 10) || 1,
+      curso_interesse: String(rowData[1] || "").trim(),
+      contato_anterior: String(rowData[2] || "").trim(),
+      conhecimento: String(rowData[3] || "").trim(),
+      trabalha: String(rowData[4] || "").trim(),
+      area_atual: String(rowData[5] || "").trim(),
+      objetivo_meses: String(rowData[6] || "").trim(),
+      objetivo_profissional: String(rowData[7] || "").trim(),
+      o_que_mudaria: String(rowData[8] || "").trim(),
+      impedimento: String(rowData[9] || "").trim(),
+      nome_completo: String(rowData[10] || "").trim(),
+      idade: String(rowData[11] || "").trim(),
+      whatsapp: limparTelefone(rowData[12]),
+      bairro: String(rowData[13] || "").trim(),
+      email: String(rowData[14] || "").trim(),
+      data_hora: String(rowData[15] || "").trim(),
+      updated_at: new Date().toISOString()
+    };
+
+    if (!payload.nome_completo && !payload.whatsapp) return;
+
+    // Busca se já existe pelo numero_participante
+    const urlBusca = SUPABASE_URL + "/rest/v1/sorteio_participantes?numero_participante=eq." + payload.numero_participante + "&select=id";
+    const resBusca = UrlFetchApp.fetch(urlBusca, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      muteHttpExceptions: true
+    });
+
+    const lista = JSON.parse(resBusca.getContentText());
+    if (lista && lista.length > 0) {
+      const id = lista[0].id;
+      UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/sorteio_participantes?id=eq." + id, {
+        method: "PATCH",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      });
+    } else {
+      payload.created_at = new Date().toISOString();
+      payload.sorteado = false;
+      payload.enviado_crm = false;
+      UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/sorteio_participantes", {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      });
+    }
+  } catch (err) {
+    Logger.log("Erro ao sincronizar sorteio para Supabase: " + err);
+  }
 }
