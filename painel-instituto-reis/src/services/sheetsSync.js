@@ -3,7 +3,7 @@
  * Comunica com o Google Apps Script Webhook ou executa sincronização híbrida.
  */
 
-const APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || ''
+const APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxaSOTHqTD3rir1pqatq1Ad8ouXgCvWigzDD8vFZxgkwzTP-a7dbOsY-Gg9uw1Rz3oc/exec'
 
 /**
  * Envia comando de sincronização para a planilha Google Sheets.
