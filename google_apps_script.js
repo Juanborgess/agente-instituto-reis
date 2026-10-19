@@ -7,13 +7,15 @@
  * ==============================================================================
  */
 
-// --- CONFIGURAÇÕES DAS ABAS E SUPABASE ---
+// --- CONFIGURAÇÕES DAS ABAS E SUPABASE VIA PROPRIEDADES SEGURAS ---
+// Para segurança em repositórios públicos, as chaves são lidas das Propriedades do Script do Google.
 const SHEET_NAME_SORTEIO = "Sorteio_QR_Code";
 const ABA_COBRANCA = "Cobranca_Alunos";
 const ABA_CRM = "CRM_Vendas";
 
-const SUPABASE_URL = "https://szoypbzmqgidzadjxbvs.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6b3lwYnptcWdpZHphZGp4YnZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjAwODI0NSwiZXhwIjoyMTA3NTg0MjQ1fQ.ImWBmPW1ASOsq9jc9ruFZZxNfzYHtlBnmAyJA2qQAII";
+const PROPRIEDADES = PropertiesService.getScriptProperties();
+const SUPABASE_URL = PROPRIEDADES.getProperty("SUPABASE_URL") || "https://szoypbzmqgidzadjxbvs.supabase.co";
+const SUPABASE_KEY = PROPRIEDADES.getProperty("SUPABASE_KEY") || "";
 
 /**
  * Menu Superior Automático ao abrir a planilha
@@ -23,8 +25,36 @@ function onOpen() {
     .createMenu("⚡ Painel Instituto Reis")
     .addItem("🔄 Sincronizar Tudo (Cobrança & CRM)", "sincronizarTudoParaSupabase")
     .addItem("🧪 Testar Conexão com Supabase", "testarConexaoSupabase")
+    .addItem("🔐 Configurar Chave do Supabase", "solicitarChaveSupabaseAoUsuario")
     .addToUi();
 }
+
+/**
+ * Função segura para inserir/atualizar a chave do Supabase direto na planilha
+ * sem precisar expor no código público do GitHub!
+ */
+function solicitarChaveSupabaseAoUsuario() {
+  const ui = SpreadsheetApp.getUi();
+  const resposta = ui.prompt(
+    "Configuração Segura do Supabase",
+    "Cole sua chave service_role do Supabase abaixo (ela ficará salva internamente de forma protegida):",
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (resposta.getSelectedButton() === ui.Button.OK) {
+    const chave = resposta.getResponseText().trim();
+    if (chave) {
+      PropertiesService.getScriptProperties().setProperties({
+        "SUPABASE_URL": "https://szoypbzmqgidzadjxbvs.supabase.co",
+        "SUPABASE_KEY": chave
+      });
+      ui.alert("✅ Chave do Supabase configurada com sucesso e protegida nas Propriedades do Script!");
+    } else {
+      ui.alert("⚠️ Nenhuma chave informada.");
+    }
+  }
+}
+
 
 /**
  * ROTEADOR POST PRINCIPAL
@@ -443,6 +473,10 @@ function aoEditarPlanilha(e) {
  * Sincroniza linha editada da aba Cobranca_Alunos para a tabela alunos_cobranca
  */
 function sincronizarLinhaCobrancaParaSupabase(sheet, linha) {
+  if (!SUPABASE_KEY) {
+    Logger.log("Aviso: SUPABASE_KEY não configurada nas Propriedades do Script.");
+    return;
+  }
   const range = sheet.getRange(linha, 1, 1, 7);
   const dados = range.getValues()[0];
 
@@ -514,6 +548,10 @@ function sincronizarLinhaCobrancaParaSupabase(sheet, linha) {
  * Sincroniza linha editada da aba CRM_Vendas para a tabela leads_crm
  */
 function sincronizarLinhaCrmParaSupabase(sheet, linha) {
+  if (!SUPABASE_KEY) {
+    Logger.log("Aviso: SUPABASE_KEY não configurada nas Propriedades do Script.");
+    return;
+  }
   const range = sheet.getRange(linha, 1, 1, 8);
   const dados = range.getValues()[0];
 
@@ -670,6 +708,13 @@ function parseValorMoeda(val) {
 }
 
 function testarConexaoSupabase() {
+  if (!SUPABASE_KEY) {
+    SpreadsheetApp.getUi().alert(
+      "⚠️ A chave do Supabase ainda não foi configurada!\n\n" +
+      "Clique no menu '⚡ Painel Instituto Reis' > '🔐 Configurar Chave do Supabase' para colar sua chave com segurança."
+    );
+    return;
+  }
   try {
     const res = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/alunos_cobranca?select=count", {
       method: "GET",
@@ -688,6 +733,13 @@ function testarConexaoSupabase() {
  * Sincroniza todas as linhas de Cobrança e de CRM com o Supabase
  */
 function sincronizarTudoParaSupabase() {
+  if (!SUPABASE_KEY) {
+    SpreadsheetApp.getUi().alert(
+      "⚠️ A chave do Supabase ainda não foi configurada!\n\n" +
+      "Clique no menu '⚡ Painel Instituto Reis' > '🔐 Configurar Chave do Supabase' para colar sua chave com segurança."
+    );
+    return;
+  }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // 1. Sincroniza Cobrança

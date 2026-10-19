@@ -12,7 +12,10 @@ wheels/
 # Arquivos de Senhas e Chaves (NUNCA SUBIR)
 .env
 .env.*
-credentials.json
+.env.local
+**/credentials*.json
+*.pem
+*.key
 qrcode.html
 roadmap-nova_função.txt
 logo-instituto.png.png
