@@ -69,6 +69,9 @@ def sincronizar_sorteio_para_supabase():
     inseridos = 0
     atualizados = 0
 
+    # Rastreia todos os participantes válidos na planilha
+    numeros_na_planilha = set()
+
     for idx, row in enumerate(valores[1:], start=1):
         if len(row) < 11:
             continue
@@ -79,6 +82,8 @@ def sincronizar_sorteio_para_supabase():
         
         if not nome and not tel:
             continue
+
+        numeros_na_planilha.add(num_part)
 
         payload = {
             "numero_participante": num_part,
@@ -110,8 +115,19 @@ def sincronizar_sorteio_para_supabase():
             sb.table("sorteio_participantes").insert(payload).execute()
             inseridos += 1
 
-    print(f"✅ Sincronização concluída! Inseridos: {inseridos} | Atualizados: {atualizados}")
-    return {"total": len(valores) - 1, "inseridos": inseridos, "atualizados": atualizados}
+    # Reconciliação: se um participante foi excluído da planilha, remove do Supabase
+    removidos = 0
+    for num_part, id_sb in existentes.items():
+        if num_part not in numeros_na_planilha:
+            try:
+                sb.table("sorteio_participantes").delete().eq("id", id_sb).execute()
+                removidos += 1
+                print(f"🗑️ Participante #{num_part} removido do Supabase pois foi excluído da planilha.")
+            except Exception as e_del:
+                print(f"Erro ao remover participante #{num_part} do Supabase: {e_del}")
+
+    print(f"✅ Sincronização concluída! Inseridos: {inseridos} | Atualizados: {atualizados} | Removidos: {removidos}")
+    return {"total": len(valores) - 1, "inseridos": inseridos, "atualizados": atualizados, "removidos": removidos}
 
 if __name__ == "__main__":
     sincronizar_sorteio_para_supabase()

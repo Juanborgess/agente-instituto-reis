@@ -109,5 +109,14 @@ export async function excluirLeadNaPlanilha(telefone, curso) {
   })
 }
 
-
-
+/**
+ * Exclui um participante da aba Sorteio_QR_Code.
+ */
+export async function excluirParticipanteSorteioNaPlanilha(numeroParticipante, whatsapp, nomeCompleto) {
+  return sincronizarComPlanilha({
+    action: 'excluir_participante_sorteio',
+    numero_participante: numeroParticipante,
+    whatsapp: whatsapp,
+    nome_completo: nomeCompleto
+  })
+}

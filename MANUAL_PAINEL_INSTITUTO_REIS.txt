@@ -3,7 +3,7 @@
                     Guia Prático de Trabalho para a Recepção
 ================================================================================
 
-Fala, Lucas! Este manual foi preparado especialmente para você e toda a equipe
+Fala, imrão! Esse manual foi preparado especialmente para você e toda a equipe
 da recepção do Instituto Reis dominarem 100% do novo Painel no dia a dia.
 
 Aqui está tudo o que você precisa saber, explicado de forma simples, direta e
@@ -33,7 +33,7 @@ SUMÁRIO GERAL:
 5. PASSO A PASSO: O que Fazer Quando Entrar um Lead Novo (Regra de Ouro)
 6. Módulo 3: Sorteio & Pesquisa QR Code (Participantes e Roleta ao Vivo)
 7. Como Exportar Listas para o Excel
-8. Como Criar Cursos Novos sem Precisar de Programador
+8. Como Criar Cursos Novos
 9. Como Instalar o Painel no Celular como Aplicativo
 10. Rotina Diária Recomendada para o Lucas (Checklist Prático)
 11. Dúvidas Frequentes (Perguntas e Respostas Rápidas)
@@ -44,8 +44,8 @@ SUMÁRIO GERAL:
 1. COMO ACESSAR O PAINEL
 ================================================================================
 1. Abra o navegador de internet (Google Chrome, Edge no computador ou Safari no celular).
-2. Entre no link do painel do Instituto Reis.
-3. Digite o seu e-mail e senha de acesso.
+2. Entre no link do painel do Instituto Reis (https://painel.institutoreiscursos.com.br/).
+3. Digite o seu e-mail e senha de acesso institutoreiscursos@gmail.com e cursosprofissionalizantes1708.
 4. No topo da tela (ou no rodapé do celular), você verá os 3 botões principais:
    • 💵 Cobrança Preventiva (mensalidades dos alunos matriculados)
    • 👥 CRM de Vendas (interessados e novos contatos)
@@ -268,6 +268,18 @@ RECURSOS PRINCIPAIS DA ABA DE SORTEIO:
    - Quando você quiser fazer um sorteio novo na semana seguinte, clique nele.
    - Ele limpa o status de sorteado de todo mundo de uma vez só, deixando a lista limpa
      para um novo evento.
+
+7. Botão Lixeira 🗑️ (Como Excluir Participantes Repetidos ou de Teste):
+   - Viu que a mesma pessoa se cadastrou duas vezes no sorteio ou foi um cadastro de teste?
+   - No card do participante (ao lado do WhatsApp) e também dentro da ficha em "Ver Respostas",
+     existe o botão da Lixeira 🗑️.
+   - Ao clicar nele e confirmar a exclusão:
+     • O participante sai na hora da sua tela.
+     • A linha física dele é APAGADA na Planilha do Google (na aba Sorteio_QR_Code),
+       sem deixar buracos ou linhas em branco.
+   - E SE VOCÊ APAGAR DIRETO NA PLANILHA DO GOOGLE?
+     • Segue exatamente a mesma regra nos dois sentidos! Se você apagar uma linha
+       duplicada direto na planilha, o painel reconhece e remove o participante da tela também.
 
 
 ================================================================================

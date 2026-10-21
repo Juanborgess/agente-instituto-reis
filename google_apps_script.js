@@ -76,7 +76,12 @@ function doPost(e) {
       return processarCrm(doc, data);
     }
 
-    // 3. REQUISIÇÕES DO SORTEIO QR CODE (100% preservado)
+    // 3. REQUISIÇÕES DE EXCLUSÃO DE PARTICIPANTE DO SORTEIO
+    if (data.action === "excluir_participante_sorteio" || data.action === "excluir_sorteio") {
+      return processarExclusaoSorteio(doc, data);
+    }
+
+    // 4. REQUISIÇÕES DO SORTEIO QR CODE (100% preservado)
     return processarSorteioQRCode(doc, data);
 
   } catch (error) {
@@ -140,6 +145,57 @@ function processarSorteioQRCode(doc, data) {
       participante: numeroParticipante
     }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Exclui a linha do participante da aba Sorteio_QR_Code
+ */
+function processarExclusaoSorteio(doc, body) {
+  let sheet = doc.getSheetByName(SHEET_NAME_SORTEIO);
+  if (!sheet) { sheet = doc.getSheets()[0]; }
+
+  const numAlvo = parseInt(body.numero_participante, 10);
+  const telAlvo = limparTelefone(body.whatsapp || body.telefone);
+  const nomeAlvo = String(body.nome_completo || body.nome || "").trim().toLowerCase();
+
+  const dadosA = sheet.getRange("A:A").getValues(); // Nº Participante (Col 1)
+  const dadosK = sheet.getRange("K:K").getValues(); // Nome Completo (Col 11)
+  const dadosM = sheet.getRange("M:M").getValues(); // WhatsApp (Col 13)
+
+  let linhaEncontrada = -1;
+  for (let i = 1; i < dadosA.length; i++) {
+    const num = parseInt(dadosA[i][0], 10);
+    const n = String(dadosK[i][0] || "").trim().toLowerCase();
+    const t = limparTelefone(dadosM[i][0]);
+
+    if (!isNaN(numAlvo) && num === numAlvo) {
+      linhaEncontrada = i + 1;
+      break;
+    } else if (telAlvo && t === telAlvo) {
+      if (!nomeAlvo || n.indexOf(nomeAlvo) !== -1 || nomeAlvo.indexOf(n) !== -1) {
+        linhaEncontrada = i + 1;
+        break;
+      }
+    } else if (!telAlvo && isNaN(numAlvo) && nomeAlvo && n === nomeAlvo) {
+      linhaEncontrada = i + 1;
+      break;
+    }
+  }
+
+  if (linhaEncontrada !== -1) {
+    sheet.deleteRow(linhaEncontrada);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      action: "excluir_participante_sorteio",
+      linha: linhaEncontrada,
+      message: "Participante excluído com sucesso da planilha Sorteio_QR_Code"
+    })).setMimeType(ContentService.MimeType.JSON);
+  } else {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: "Participante não localizado na planilha Sorteio_QR_Code para exclusão"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 // ==============================================================================
@@ -794,6 +850,8 @@ function sincronizarTudoParaSupabase() {
         totalSorteio++;
       }
     }
+    // Reconcilia participantes removidos da planilha
+    reconciliarExclusoesSorteioParaSupabase();
   }
 
   SpreadsheetApp.getUi().alert(
@@ -802,6 +860,68 @@ function sincronizarTudoParaSupabase() {
     "• Leads CRM sincronizados: " + totalCrm + "\n" +
     "• Participantes Sorteio sincronizados: " + totalSorteio
   );
+}
+
+/**
+ * Remove do Supabase qualquer participante que foi excluído fisicamente da aba Sorteio_QR_Code
+ */
+function reconciliarExclusoesSorteioParaSupabase() {
+  if (!SUPABASE_KEY) return;
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetSorteio = ss.getSheetByName(SHEET_NAME_SORTEIO);
+    if (!sheetSorteio) return;
+
+    const maxSorteio = sheetSorteio.getLastRow();
+    const numerosNaPlanilha = [];
+    if (maxSorteio >= 2) {
+      const colA = sheetSorteio.getRange(2, 1, maxSorteio - 1, 1).getValues();
+      for (let i = 0; i < colA.length; i++) {
+        const num = parseInt(colA[i][0], 10);
+        if (!isNaN(num)) numerosNaPlanilha.push(num);
+      }
+    }
+
+    const urlBusca = SUPABASE_URL + "/rest/v1/sorteio_participantes?select=id,numero_participante";
+    const resBusca = UrlFetchApp.fetch(urlBusca, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      muteHttpExceptions: true
+    });
+
+    const listaSb = JSON.parse(resBusca.getContentText());
+    if (listaSb && listaSb.length > 0) {
+      for (let j = 0; j < listaSb.length; j++) {
+        const item = listaSb[j];
+        if (item.numero_participante && numerosNaPlanilha.indexOf(item.numero_participante) === -1) {
+          UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/sorteio_participantes?id=eq." + item.id, {
+            method: "DELETE",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + SUPABASE_KEY
+            },
+            muteHttpExceptions: true
+          });
+          Logger.log("Participante #" + item.numero_participante + " removido do Supabase (excluído da planilha).");
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log("Erro na reconciliação de sorteio: " + err);
+  }
+}
+
+function onChange(e) {
+  try {
+    if (e && (e.changeType === "REMOVE_ROW" || e.changeType === "OTHER")) {
+      reconciliarExclusoesSorteioParaSupabase();
+    }
+  } catch (err) {
+    Logger.log("Erro no onChange: " + err);
+  }
 }
 
 /**

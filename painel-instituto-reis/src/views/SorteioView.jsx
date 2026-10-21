@@ -3,11 +3,12 @@ import { supabase } from '../lib/supabase'
 import { 
   Trophy, Search, RefreshCw, MessageCircle, Phone, 
   MapPin, Calendar, User, Eye, UserPlus, Sparkles, Filter, CheckCircle2, AlertCircle, Download,
-  X, RotateCcw
+  X, RotateCcw, Trash2
 } from 'lucide-react'
 import ModalDetalhesParticipante from '../components/ModalDetalhesParticipante'
 import ModalSorteador from '../components/ModalSorteador'
 import { exportarParaCSV } from '../utils/exportCsv'
+import { excluirParticipanteSorteioNaPlanilha } from '../services/sheetsSync'
 
 export default function SorteioView() {
   const [participantes, setParticipantes] = useState([])
@@ -17,6 +18,7 @@ export default function SorteioView() {
   const [filtroCurso, setFiltroCurso] = useState('todos')
   const [participanteSelecionado, setParticipanteSelecionado] = useState(null)
   const [modalSorteadorAberto, setModalSorteadorAberto] = useState(false)
+  const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
 
   const carregarParticipantes = async (silencioso = false) => {
@@ -228,6 +230,43 @@ export default function SorteioView() {
     }
   }
 
+  // Exclusão de participante do sorteio (Supabase + Planilha)
+  const handleExcluirParticipante = async (participante) => {
+    const confirmou = window.confirm(
+      `Deseja realmente excluir o participante #${participante.numero_participante} (${participante.nome_completo})?\n\nEsta ação removerá o participante tanto do painel quanto da planilha Sorteio_QR_Code permanentemente.`
+    )
+    if (!confirmou) return
+
+    setProcessandoId(participante.id)
+    try {
+      const { error } = await supabase
+        .from('sorteio_participantes')
+        .delete()
+        .eq('id', participante.id)
+
+      if (!error) {
+        setParticipantes(prev => prev.filter(p => p.id !== participante.id))
+        mostrarToast(`Participante #${participante.numero_participante} excluído com sucesso do painel e da planilha!`)
+        if (participanteSelecionado && participanteSelecionado.id === participante.id) {
+          setParticipanteSelecionado(null)
+        }
+
+        // Remove da planilha Google Sheets
+        excluirParticipanteSorteioNaPlanilha(
+          participante.numero_participante,
+          participante.whatsapp,
+          participante.nome_completo
+        )
+      } else {
+        mostrarToast(`Erro ao excluir: ${error.message}`)
+      }
+    } catch (err) {
+      mostrarToast("Falha ao excluir o participante.")
+    } finally {
+      setProcessandoId(null)
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-32 md:pb-12">
       {/* Toast Notification */}
@@ -244,6 +283,7 @@ export default function SorteioView() {
         isOpen={!!participanteSelecionado}
         onClose={() => setParticipanteSelecionado(null)}
         onToggleSorteado={(p) => handleToggleSorteado(p)}
+        onExcluirParticipante={(p) => handleExcluirParticipante(p)}
         onEnviarParaCRM={(p) => {
           setParticipantes(prev => prev.map(item => item.id === p.id ? { ...item, enviado_crm: true } : item))
           mostrarToast(`Participante ${p.nome_completo} enviado ao CRM com sucesso!`)
@@ -515,6 +555,15 @@ export default function SorteioView() {
                   >
                     <MessageCircle className="w-4 h-4" />
                   </a>
+
+                  <button
+                    onClick={() => handleExcluirParticipante(p)}
+                    disabled={processandoId === p.id}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                    title="Excluir Participante do Sorteio e da Planilha"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )

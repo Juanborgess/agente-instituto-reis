@@ -1,7 +1,7 @@
 import React from 'react'
 import { 
   X, User, Phone, MapPin, Mail, Calendar, Briefcase, 
-  Target, HeartHandshake, AlertCircle, MessageCircle, ArrowRight, UserPlus, Trophy
+  Target, HeartHandshake, AlertCircle, MessageCircle, ArrowRight, UserPlus, Trophy, Trash2
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -10,7 +10,8 @@ export default function ModalDetalhesParticipante({
   isOpen, 
   onClose, 
   onEnviarParaCRM,
-  onToggleSorteado
+  onToggleSorteado,
+  onExcluirParticipante
 }) {
   if (!isOpen || !participante) return null
 
@@ -207,15 +208,29 @@ export default function ModalDetalhesParticipante({
 
         {/* Ações Inferiores */}
         <div className="pt-6 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <a
-            href={linkWhatsApp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Iniciar WhatsApp com Participante</span>
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={linkWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Iniciar WhatsApp</span>
+            </a>
+
+            {onExcluirParticipante && (
+              <button
+                type="button"
+                onClick={() => onExcluirParticipante(participante)}
+                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                title="Excluir este participante do sorteio e da planilha"
+              >
+                <Trash2 className="w-4 h-4 text-red-400" />
+                <span className="hidden sm:inline">Excluir</span>
+              </button>
+            )}
+          </div>
 
           {!participante.enviado_crm ? (
             <button
