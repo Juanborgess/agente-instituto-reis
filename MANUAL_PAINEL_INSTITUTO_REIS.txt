@@ -1,222 +1,383 @@
 ================================================================================
           MANUAL COMPLETO DO PAINEL OPERACIONAL - INSTITUTO REIS
-                     Guia Prático de Uso para a Equipe
+                    Guia Prático de Trabalho para a Recepção
 ================================================================================
 
-Olá, Lucas! Este guia foi feito para você e toda a equipe do Instituto Reis 
-dominarem 100% das ferramentas do novo Painel Web.
+Fala, Lucas! Este manual foi preparado especialmente para você e toda a equipe
+da recepção do Instituto Reis dominarem 100% do novo Painel no dia a dia.
 
-O painel é integrado em tempo real com o Google Sheets e com os robôs de 
-WhatsApp. Tudo o que você faz aqui reflete na planilha instantaneamente, e o 
-que for alterado na planilha atualiza a sua tela na mesma hora, sem precisar 
-ficar recarregando.
+Aqui está tudo o que você precisa saber, explicado de forma simples, direta e
+sem palavras difíceis ou termos técnicos. Guarde este arquivo com você!
 
-O painel funciona tanto no Computador quanto no Celular (no celular, o menu de 
-navegação fica fixo no rodapé da tela para facilitar o toque).
+O painel é o seu centro de controle da escola:
+1. Ele cuida das mensalidades dos alunos (Cobrança Preventiva).
+2. Ele organiza quem quer fazer cursos e acompanha as conversas (CRM de Vendas).
+3. Ele recebe quem preencheu a pesquisa do QR Code dos panfletos (Sorteio).
+
+O MAIS IMPORTANTE:
+O painel conversa sozinho e em tempo real com a sua Planilha do Google e com os
+robôs de WhatsApp.
+- Se você der baixa ou cadastrar alguém no painel, a planilha atualiza na hora.
+- Se alguém mexer na planilha, a tela do seu painel se atualiza sozinha, sem você
+  precisar ficar apertando F5 ou recarregando a página.
+
+Você pode usar o painel no COMPUTADOR da recepção ou no seu CELULAR (no celular,
+o menu fica fixo embaixo da tela para você mexer com o polegar com total conforto).
 
 --------------------------------------------------------------------------------
+SUMÁRIO GERAL:
+1. Como Acessar o Painel
+2. Módulo 1: Cobrança Preventiva (Mensalidades dos Alunos)
+3. Módulo 2: CRM & Funil de Vendas (Interessados em Cursos)
+4. MENSAGENS EXATAS que o Robô Envia no WhatsApp (Palavra por Palavra)
+5. PASSO A PASSO: O que Fazer Quando Entrar um Lead Novo (Regra de Ouro)
+6. Módulo 3: Sorteio & Pesquisa QR Code (Participantes e Roleta ao Vivo)
+7. Como Exportar Listas para o Excel
+8. Como Criar Cursos Novos sem Precisar de Programador
+9. Como Instalar o Painel no Celular como Aplicativo
+10. Rotina Diária Recomendada para o Lucas (Checklist Prático)
+11. Dúvidas Frequentes (Perguntas e Respostas Rápidas)
+--------------------------------------------------------------------------------
+
+
+================================================================================
 1. COMO ACESSAR O PAINEL
+================================================================================
+1. Abra o navegador de internet (Google Chrome, Edge no computador ou Safari no celular).
+2. Entre no link do painel do Instituto Reis.
+3. Digite o seu e-mail e senha de acesso.
+4. No topo da tela (ou no rodapé do celular), você verá os 3 botões principais:
+   • 💵 Cobrança Preventiva (mensalidades dos alunos matriculados)
+   • 👥 CRM de Vendas (interessados e novos contatos)
+   • 🏆 Sorteio QR Code (formulários dos panfletos e sorteios ao vivo)
+
+
+================================================================================
+2. MÓDULO: COBRANÇA PREVENTIVA (Mensalidades dos Alunos)
+================================================================================
+Objetivo: Acompanhar os vencimentos das mensalidades, receber os pagamentos em dia
+e evitar cobranças constrangedoras. O robô avisa o aluno com educação antes de vencer.
+
+COMO O ROBÔ DE COBRANÇA TRABALHA SOZINHO:
+O robô olha todos os dias a data de vencimento de cada aluno e faz o seguinte:
+• Faltando 5 dias para vencer: Envia um lembrete amigável para o aluno se planejar.
+• Faltando 1 dia (Véspera): Envia um aviso lembrando que vence amanhã.
+• No dia do Vencimento: Envia a mensagem com a chave PIX oficial da escola.
+• Aluno PAGO ou CONCLUÍDO: O robô NUNCA envia mensagem! Ele respeita quem já pagou.
+
+AS ABAS NO TOPO DA TELA (FILTROS RÁPIDOS):
+• "Hoje": Mostra apenas os alunos que vencem exatamente no dia de hoje.
+  (Esta é a sua primeira aba do dia: confira quem pagou e dê baixa).
+• "1 Dia": Alunos que vencem amanhã.
+• "5 Dias": Alunos que vencem daqui a 5 dias.
+• "Pendentes": Todos os alunos que têm mensalidades em aberto.
+• "Pagos / Concluídos": Quem já pagou ou já concluiu o curso.
+• "Desistiu": Alunos que trancaram a matrícula ou desistiram.
+
+FUNÇÕES DE CADA BOTÃO NO CARD DO ALUNO:
+
+1. Botão Verde "Marcar Pago" (1 Toque):
+   - O aluno fez o PIX, pagou em dinheiro ou no cartão na recepção?
+   - Dê 1 clique no botão verde "Marcar Pago".
+   - Na mesma hora, o status dele muda para PAGO, salva na planilha e o robô
+     NÃO manda mais cobrança para ele naquele mês.
+
+2. Botão Roxo "📅 Renovar Mensalidade (+1 Mês / Próxima Parcela)":
+   - Fica dentro da edição do aluno (clique no lápis ✏️ do card).
+   - Quando o aluno pagar a parcela atual e você quiser já deixar programada
+     a parcela do mês que vem:
+     Passo 1: Clique no lápis ✏️ do aluno.
+     Passo 2: Clique no botão roxo "📅 Renovar Mensalidade: Criar Próxima Parcela (+1 Mês)".
+     Passo 3: O sistema faz tudo sozinho na hora:
+       • Pula a data de vencimento para o mês seguinte (mantendo o mesmo dia).
+       • Soma a parcela sozinho (ex: de "1/6" vira "2/6", de "2/6" vira "3/6").
+       • Volta o status para "PENDENTE" para o robô voltar a acompanhar no mês que vem.
+     Passo 4: Clique em "Salvar Alterações". Pronto!
+
+3. Botão "WhatsApp" no Card:
+   - Quer falar com o aluno sem precisar salvar o número na agenda do telefone?
+   - Clique em "WhatsApp". O sistema abre a conversa direto no WhatsApp Web
+     ou no aplicativo do seu celular.
+
+4. Botão Lápis ✏️ (Editar Aluno):
+   - Permite corrigir nome, telefone, data de vencimento, curso, status ou valor da parcela.
+   - O campo de valor aceita qualquer jeito que você digitar (ex: "150", "150,00" ou "R$ 150").
+
+5. Botão Lixeira 🗑️ (Excluir Aluno):
+   - Fica no cantinho da tela de edição (botão vermelho).
+   - Se você cadastrou alguém repetido por engano, ao excluir aqui o aluno sai
+     do painel e o sistema APAGA A LINHA DA PLANILHA, sem deixar linhas em branco.
+
+6. Botão "+ Novo Aluno":
+   - Fica no topo direito da tela.
+   - Serve para colocar um aluno novo na carteira de cobrança assim que ele se matricular.
+
+
+================================================================================
+3. MÓDULO: CRM & FUNIL DE VENDAS (Interessados em Cursos)
+================================================================================
+Objetivo: Não deixar NENHUM interessado esquecido. Quando uma pessoa pede informações
+sobre um curso, ela entra aqui para ser acompanhada até fazer a matrícula.
+
+AS 5 ETAPAS DO FUNIL (ABAS):
+1. Novos (D1): Interessados recém-cadastrados que ainda não receberam mensagem.
+2. Em Cadência: O robô está acompanhando e mandando mensagens automáticas.
+3. Atendimento Humano: A pessoa respondeu no WhatsApp e agora você (Lucas) está conversando.
+4. Matriculados (Ganhou 🏆): A pessoa fechou a matrícula! Virou aluna.
+5. Perdidos (Perdeu ❌): A pessoa avisou que não tem interesse ou desistiu.
+
+
+================================================================================
+4. MENSAGENS EXATAS QUE O ROBÔ ENVIA NO WHATSAPP (RÉGUA DE VENDAS)
+================================================================================
+Quando você cadastra um interessado no CRM (ou ele vem do formulário do site),
+se ele não responder de imediato, o robô faz um acompanhamento automático e
+profissional durante 7 dias.
+
+Estas são as mensagens EXATAS aprovadas e enviadas no celular do interessado:
+
 --------------------------------------------------------------------------------
-1. Acesse o link oficial do painel no navegador (Chrome, Safari, etc).
-2. Faça o login com o seu e-mail e senha de equipe.
-3. No topo (ou rodapé do celular), você terá 3 módulos principais:
-   - 💵 Cobrança Preventiva
-   - 👥 CRM de Vendas
-   - 🏆 Sorteio QR Code
+MENSAGEM 1: D+1 (Disparada 1 dia após a pessoa demonstrar interesse)
+--------------------------------------------------------------------------------
+"Olá, [Nome]. Identificamos que o seu pedido de atendimento sobre a turma de
+[Curso] permanece pendente de confirmação no sistema do Instituto Reis.
+Confirma o encerramento do seu registo?"
+
+-> Por que essa mensagem é tão poderosa?
+Ela gera uma sensação de urgência imediata. Como pergunta se a pessoa confirma
+o encerramento do cadastro dela, ela se assusta de perder a vaga e responde na
+mesma hora: "Não, não quero encerrar!", "Como funciona?", "Qual o valor?".
+
+--------------------------------------------------------------------------------
+MENSAGEM 2: D+4 (Disparada 4 dias após a entrada, caso ainda não tenha respondido)
+--------------------------------------------------------------------------------
+"Olá, [Nome]. Informamos que a atualização do seu registo referente à turma de
+[Curso] aguarda validação. O sistema do Instituto Reis manterá este protocolo
+disponível por tempo limitado. Precisa de auxílio com o seu atendimento?"
+
+-> Por que essa mensagem funciona?
+É um lembrete formal e muito educado de que a vaga continua reservada, mas por
+pouco tempo. Muitas pessoas que estavam na correria da semana aproveitam essa
+mensagem para tirar dúvidas.
+
+--------------------------------------------------------------------------------
+MENSAGEM 3: D+7 (Disparada 7 dias após a entrada - Último Aviso)
+--------------------------------------------------------------------------------
+"Olá, [Nome]. Informamos que o protocolo de atendimento relativo ao curso de
+[Curso] está a ser cancelado no sistema do Instituto Reis por falta de
+confirmação. Caso pretenda retomar este processo, por favor responda a esta
+mensagem."
+
+-> Por que essa mensagem funciona?
+É a mensagem de "despedida amigável". Quem realmente tinha interesse mas foi
+procrastinando responde aqui para não perder a oportunidade. Se não responder,
+o robô para os envios e não incomoda mais a pessoa.
+
 
 ================================================================================
-2. MÓDULO: COBRANÇA PREVENTIVA (Aba: Cobranca_Alunos)
-================================================================================
-Objetivo: Controlar os vencimentos das mensalidades dos alunos, evitar atrasos 
-e dar baixa de pagamentos com rapidez.
-
-PRINCIPAIS FUNCIONALIDADES:
-
-• Abas de Vencimento Inteligente (Filtros no topo):
-  - "Hoje": Alunos cuja parcela vence exatamente no dia de hoje.
-  - "1 Dia": Alunos que vencem amanhã (aviso preventivo).
-  - "5 Dias": Alunos que vencem nos próximos 5 dias.
-  - "Pendentes": Alunos com parcelas pendentes em geral.
-  - "Pagos / Concluídos": Alunos que já acertaram o mês ou concluíram.
-  - "Desistiu": Alunos que trancaram ou desistiram.
-
-• Botão "Marcar como Pago" (1 Clique):
-  - Quando o aluno fizer o pagamento (PIX, dinheiro ou cartão), basta clicar 
-    no botão verde "Marcar Pago" no card dele.
-  - O painel altera o status para PAGO e atualiza a coluna E da planilha na 
-    mesma hora. O robô de cobrança para de enviar lembretes para ele.
-
-• 📅 RENOVAÇÃO RÁPIDA DE MENSALIDADE (+1 Mês / Próxima Parcela):
-  - No modal de edição do aluno (botão lápis ✏️), há o botão roxo:
-    "📅 Renovar Mensalidade: Criar Próxima Parcela (+1 Mês)".
-  - Ao clicar nele:
-    1. A data de vencimento avança automaticamente para o próximo mês (mantendo o dia);
-    2. O número da parcela avança sozinho (ex: de "1/6" para "2/6", "2/6" para "3/6");
-    3. O status volta automaticamente para "PENDENTE" para o robô monitorar a nova mensalidade;
-  - Você só precisa clicar e em seguida salvar!
-
-• 📥 BOTÃO "EXPORTAR EXCEL" (Compatível com Excel Brasileiro):
-  - No topo de Cobrança, CRM e Sorteio há o botão "Exportar Excel".
-  - Ele baixa um arquivo (.CSV) com acentuação perfeita e colunas formatadas 
-    para abrir diretamente no Excel ou Google Planilhas.
-  - A exportação respeita o filtro que você estiver vendo na tela (por exemplo, 
-    se filtrou por um curso específico ou apenas quem está atrasado, baixa apenas eles).
-
-• 🔍 FILTRO COMBINADO POR CURSO + BUSCA:
-  - Ao lado da barra de busca há um menu seletor com todos os cursos existentes.
-  - Você pode filtrar apenas alunos de "Barbeiro", "Lashes", etc., ou buscar por nome.
-
-• 🎓 CURSOS PERSONALIZADOS ("+ Outro Curso..."):
-  - Se o Instituto lançar uma nova modalidade de curso, ninguém precisa alterar código!
-  - Basta selecionar a opção "+ Outro Curso (Digitar Novo)..." nos formulários 
-    de Novo Aluno ou Novo Lead e digitar o nome. Ele será salvo normalmente.
-
-• Botão "WhatsApp" no Card:
-  - Abre uma conversa direta com o aluno no WhatsApp com o número já formatado, 
-    sem você precisar salvar o contato na agenda do telefone.
-
-• Botão de Lápis ✏️ (Editar Aluno e Vencimento):
-  - Permite alterar o Nome, Telefone, Curso, Data do Vencimento, Status, 
-    Valor da Parcela e Parcela Atual (ex: 2/6). Aceita digitação flexível de 
-    moeda (ex: "150", "150,00" ou "R$ 150").
-  - Ao clicar em "Salvar Alterações", atualiza na hora na planilha.
-
-• Botão de Lixeira 🗑️ (Excluir Aluno):
-  - Fica dentro do modal de edição (botão vermelho) com confirmação de segurança.
-  - Se um aluno foi cadastrado duplicado ou cancelado, ao excluir, o sistema 
-    remove ele do painel e DELETA A LINHA FÍSICA da planilha, puxando as linhas 
-    de baixo para cima (não deixa linhas em branco na planilha).
-
-• Botão "+ Novo Aluno":
-  - Localizado no topo direito da tela.
-  - Permite cadastrar um aluno novo na hora (Nome, WhatsApp com DDD, Curso Oficial 
-    ou novo curso, Data de Vencimento, Valor e Parcela).
-  - O sistema grava automaticamente na primeira linha livre da planilha.
-
-================================================================================
-3. MÓDULO: CRM & FUNIL DE VENDAS (Aba: CRM_Vendas)
-================================================================================
-Objetivo: Gerenciar os interessados nos cursos, acompanhar as etapas de contato 
-e saber exatamente quem está em cadência ou pronto para matricular.
-
-ESTÁGIOS DO FUNIL (Dropdown Oficial):
-  1. Novos (D1): Pessoas que acabaram de demonstrar interesse.
-  2. Em Cadência: O robô está enviando a sequência de mensagens automáticas.
-  3. Atendimento Humano: O lead respondeu ou pediu para falar com uma pessoa.
-  4. Matriculados (Ganhou): O lead fechou a matrícula! 🎉
-  5. Perdidos (Perdeu): O lead desistiu ou não tem interesse no momento.
-
-PRINCIPAIS FUNCIONALIDADES:
-
-• REGRA DE OURO: Botão "Assumir Atendimento (Pausar Robô)":
-  - Quando um interessado responder no WhatsApp com dúvidas específicas, você 
-    clica no botão roxo "Assumir Atendimento" no card dele.
-  - O robô pausa o envio automático para aquele aluno para você conversar 
-    humanamente sem que o robô atrapalhe a negociação.
-
-• Botão "Troféu 🏆" (Marcar como Ganhou):
-  - Quando o interessado fechar a matrícula, clique no troféu verde.
-  - Ele vai para a aba de "Matriculados" e fica registrado como venda ganha.
-
-• Botão "X ❌" (Marcar como Perdido):
-  - Se a pessoa disser que não pode agora ou não tem interesse, clique no X.
-
-• Botão de Lápis ✏️ (Editar Lead):
-  - Permite alterar o Nome, WhatsApp, Curso Oficial, Fase no Funil e Data de Entrada.
-  - Sincroniza diretamente na linha exata da aba CRM_Vendas da planilha.
-
-• Botão de Lixeira 🗑️ (Excluir Lead):
-  - Remove o lead do painel e exclui fisicamente a linha dele na planilha.
-
-• Botão "+ Novo Lead":
-  - Cadastra manualmente qualquer pessoa que chamou no balcão, Instagram ou WhatsApp.
-  - Entra direto no funil e na primeira linha vazia da planilha.
-
-================================================================================
-4. MÓDULO: SORTEIO & PESQUISA QR CODE (Aba: Sorteio_QR_Code)
-================================================================================
-Objetivo: Visualizar as pessoas que preencheram o formulário no site externo 
-através do QR Code, ver a pesquisa de perfil e realizar sorteios ao vivo.
-
-PRINCIPAIS FUNCIONALIDADES:
-
-• Dashboard de Métricas no Topo:
-  - Total de participantes cadastrados.
-  - Curso mais procurado (ex: Barbeiro ou Tranças).
-  - Principal bairro de onde os alunos estão vindo (Taquara, Pechincha, Bangu...).
-  - Maior impedimento citado pelas pessoas para começar o curso.
-
-• 🎲 Botão "Realizar Sorteio" (Roleta Interativa):
-  - Fica no topo direito (botão dourado).
-  - Você pode filtrar se quer sortear entre "Todos" ou apenas os inscritos de 
-    um curso específico (ex: sortear apenas quem quer Barbeiro).
-  - Possui a opção inteligente marcada por padrão: "Não sortear quem já ganhou", 
-    garantindo que uma pessoa sorteada não ganhe repetidas vezes.
-  - Ao clicar em "Girar Roleta e Sortear", o sistema faz uma animação ao vivo 
-    girando os números e nomes dos participantes de forma aleatória e auditada.
-  - Ao parar no vencedor, exibe a tela de comemoração com o Número, Nome e um 
-    botão direto de "Notificar Vencedor no WhatsApp" para dar a notícia na hora!
-  - O vencedor fica marcado automaticamente com a etiqueta verde "SORTEADO".
-
-• 🔄 COMO DESMARCAR UM SORTEADO OU REINICIAR O SORTEIO DO ZERO:
-  - Para desmarcar UMA pessoa específica (ex: fez teste ou o sorteado não cumpriu as regras):
-    Basta passar o mouse (ou tocar no celular) no badge verde "🏆 SORTEADO" no card 
-    dele. O botão mudará para "✕ Desmarcar". Clique nele e confirme. O status volta 
-    ao normal e a pessoa fica apta a concorrer novamente.
-    (Você também pode desmarcar/marcar clicando no botão "Ver Respostas" dele).
-  - Para ZERAR O SORTEIO INTEIRO (começar do zero para uma nova semana ou evento):
-    Quando houver participantes sorteados, aparecerá no topo da tela o botão vermelho:
-    "🔄 Zerar Sorteados (X)". Ao clicar e confirmar, o sistema limpa o status de todos 
-    os ganhadores de uma vez só, deixando toda a base pronta para novos sorteios!
-
-• Botão "Ver Respostas" (Pesquisa de Perfil Completa):
-  - Cada participante tem esse botão no card. Ao clicar, abre o formulário completo 
-    com as 15 perguntas que a pessoa respondeu no site:
-    * Se já tentou aprender antes e o nível de conhecimento.
-    * Situação de trabalho atual e área em que atua.
-    * Objetivo para os próximos meses.
-    * Objetivo profissional a longo prazo.
-    * O que mudaria na vida dela com a nova profissão.
-    * O que a impede de começar hoje (ex: valor, tempo, etc).
-
-• Botão "Transformar em Lead do CRM":
-  - No modal de respostas do participante, existe esse botão.
-  - Se a pessoa não ganhou o sorteio mas tem muito interesse, com 1 clique você 
-    envia ela direto para a aba de Vendas (CRM) para a equipe entrar em contato 
-    e oferecer uma condição especial de matrícula!
-
-================================================================================
-5. DICAS PRÁTICAS E MACETES PARA O DIA A DIA
+5. PASSO A PASSO: O QUE FAZER QUANDO ENTRAR UM LEAD NOVO
 ================================================================================
 
-1. Busca Rápida:
-   Em qualquer uma das 3 abas, há um campo de busca no topo. Você pode digitar 
-   apenas o primeiro nome, os 4 últimos dígitos do WhatsApp, o bairro ou o curso 
-   que a tela filtra na hora.
+SITUAÇÃO 1: Alguém chamou no WhatsApp da escola, veio do Instagram ou veio no balcão
+1. Abra a aba "CRM de Vendas" no painel.
+2. Clique no botão azul "+ Novo Lead" (no topo direito).
+3. Preencha os campos:
+   • Nome do Interessado (ex: Carlos Silva)
+   • WhatsApp com DDD (ex: 21 98765-4321)
+   • Curso de Interesse (ex: Barbeiro, Trança, Sobrancelha...)
+4. Clique em "Salvar Lead".
+5. Pronto! O contato já está salvo no painel e na planilha com status "Novo".
 
-2. Cursos Oficiais Homologados:
-   O sistema utiliza rigorosamente os cursos oficiais da escola em todos os 
-   menus suspensos:
-   - Barbeiro
-   - Barbeiro Avançado
-   - Lashes
-   - Sobrancelha
-   - Trança
-   - trança avançado
-   - Brow Lamination
+SITUAÇÃO 2: O interessado respondeu no WhatsApp (REGRA DE OURO DA RECEPÇÃO!)
+👉 ATENÇÃO, LUCAS: ESTE É O PASSO MAIS IMPORTANTE DO SISTEMA!
+Assim que a pessoa responder no WhatsApp ("Quero saber o valor", "Tenho interesse", etc.):
+1. Abra a aba "CRM de Vendas" no painel.
+2. Procure o card daquela pessoa.
+3. Clique no botão roxo:
+   👉 "ASSUMIR ATENDIMENTO (Pausar Robô)"
+4. O que acontece quando você clica nesse botão?
+   • O status da pessoa muda na hora para "Atendimento Humano".
+   • O robô é DESLIGADO IMEDIATAMENTE para aquele contato!
+   • Ele NUNCA MAIS vai mandar mensagens automáticas para aquela pessoa.
+   • Assim, você conversa livremente com o cliente sem o robô atravessar
+     a sua conversa com mensagens automáticas.
 
-3. Edições Direto na Planilha do Google:
-   Se alguém da equipe preferir digitar algo direto na planilha do Google Sheets 
-   (mudar status, data ou nome), o robô em nuvem detecta na hora e o painel 
-   se atualiza sozinho sem você precisar apertar F5.
+SITUAÇÃO 3: O cliente fechou a matrícula! 🎉
+1. No card dele no CRM, clique no botão verde com o Troféu 🏆 ("Marcar como Ganhou").
+2. O lead vai para a aba de "Matriculados".
+3. Agora dê o passo seguinte:
+   - Vá na aba "Cobrança Preventiva".
+   - Clique em "+ Novo Aluno".
+   - Cadastre ele como aluno oficial (com o dia do vencimento da mensalidade, valor
+     e curso) para o robô de cobrança acompanhar os pagamentos futuros!
 
-4. Uso no Celular:
-   Para usar no celular como se fosse um aplicativo:
-   - Abra o link no Chrome ou Safari do seu celular.
-   - Clique nos 3 pontinhos (ou botão de compartilhar do Safari) e selecione 
-     "Adicionar à tela de início" (ou "Instalar Aplicativo").
-   - Um ícone do Instituto Reis será criado na tela do seu celular!
+SITUAÇÃO 4: O cliente disse que não quer ou não pode no momento
+1. No card dele no CRM, clique no botão cinza com o "X ❌" ("Marcar como Perdido").
+2. Ele vai para a aba de "Perdidos" e o sistema não envia mais nada para ele.
+
+SITUAÇÃO 5: Chamar o lead no WhatsApp direto pelo painel
+1. No card do lead, clique no botão "WhatsApp".
+2. O sistema já abre o WhatsApp com uma mensagem de saudação pronta mencionando
+   o nome dele e o curso que ele escolheu!
+
 
 ================================================================================
-              Instituto Reis - Transformando Vidas pela Profissão
+6. MÓDULO: SORTEIO & PESQUISA QR CODE (Formulários do Site)
+================================================================================
+Objetivo: Aqui caem automaticamente todas as pessoas que escanearam o QR Code
+dos panfletos, banners ou cartazes e responderam às perguntas no site.
+
+RECURSOS PRINCIPAIS DA ABA DE SORTEIO:
+
+1. Os 4 Cartões de Estatísticas no Topo da Tela:
+   • Total de Participantes: Quantas pessoas já se inscreveram.
+   • Curso Mais Procurado: Qual profissão está em alta.
+   • Bairro com Mais Inscritos: Onde a panfletagem está dando mais resultado.
+   • Principal Impedimento: O maior motivo de dúvida das pessoas (ex: "Falta de Dinheiro"
+     ou "Falta de Tempo"). Isso serve de argumento de vendas para você!
+
+2. Botão "Ver Respostas" no Card do Participante (Raio-X de Vendas):
+   Ao clicar, você vê a ficha completa preenchida pela pessoa:
+   • Se ela já trabalha e qual a profissão atual dela.
+   • A idade e o bairro onde mora.
+   • Qual o objetivo dela com o curso nos próximos meses.
+   • O que mais está impedindo ela de começar hoje.
+   • O que mudaria na vida dela com essa nova profissão.
+
+3. Botão "Transformar em Lead do CRM" (Dentro do Raio-X):
+   Viu alguém com perfil muito bom para ser aluno? Clique nesse botão!
+   Com 1 toque ela é copiada para o CRM de Vendas para você oferecer uma condição
+   especial de matrícula.
+
+4. 🎲 Botão Dourado "Realizar Sorteio" (Roleta Oficial ao Vivo):
+   • Perfeito para projetar na TV da recepção ou gravar a tela para o Instagram!
+   • Você pode filtrar: sortear entre "Todos" ou só de um curso específico (ex: só Barbeiro).
+   • A caixinha "Não sortear quem já ganhou" vem marcada por padrão para ninguém ganhar bis.
+   • Clique no botão dourado "Girar Roleta e Sortear":
+     Os nomes e números giram na tela em alta velocidade por 3,5 segundos com clima de suspense.
+   • Quando a roleta para, explode a tela de vitória com o nome do ganhador e um botão verde
+     para você já mandar WhatsApp para ele avisando do prêmio!
+
+5. Como Desmarcar alguém que foi Sorteado (Se foi apenas um teste):
+   - No card do participante sorteado, tem uma etiqueta dourada "🏆 SORTEADO".
+   - Basta clicar em cima dessa etiqueta! O sistema pergunta se você quer desmarcar.
+   - Ao confirmar, ele volta a concorrer normalmente.
+
+6. Botão Vermelho "🔄 Zerar Sorteados" (Começar do Zero):
+   - Fica no topo da tela de sorteio.
+   - Quando você quiser fazer um sorteio novo na semana seguinte, clique nele.
+   - Ele limpa o status de sorteado de todo mundo de uma vez só, deixando a lista limpa
+     para um novo evento.
+
+
+================================================================================
+7. COMO EXPORTAR LISTAS PARA O EXCEL (EM 1 CLIQUE)
+================================================================================
+No topo de todas as 3 abas (Cobrança, CRM e Sorteio), existe o botão:
+📥 "Exportar Excel"
+
+COMO USAR:
+1. Ele baixa na hora uma planilha compatível com o Microsoft Excel do Brasil.
+2. Todas as palavras com acentos (ç, ã, é) vêm 100% legíveis e as colunas organizadas.
+3. DICA DE MESTRE: O botão exporta exatamente o filtro que você estiver vendo na tela!
+   - Exemplo 1: Se você clicou na aba "Hoje" na Cobrança e clicou em "Exportar Excel",
+     ele baixa apenas os alunos que vencem hoje.
+   - Exemplo 2: Se você filtrou o CRM pelo curso de "Barbeiro", ele baixa apenas
+     os interessados em Barbeiro.
+
+
+================================================================================
+8. COMO CRIAR CURSOS NOVOS SEM PRECISAR DE PROGRAMADOR
+================================================================================
+Os cursos padrões da escola já estão todos cadastrados na lista:
+- Barbeiro
+- Barbeiro Avançado
+- Lashes
+- Sobrancelha
+- Trança
+- trança avançado
+- Brow Lamination
+
+👉 SE O INSTITUTO CRIAR UM CURSO NOVO (Ex: Maquiagem, Unhas em Gel, Depilação):
+Você NÃO precisa chamar suporte nem mexer em programação:
+1. Abra o formulário de cadastro ("+ Novo Aluno" ou "+ Novo Lead").
+2. No campo "Curso", clique e escolha a última opção:
+   👉 "+ Outro Curso (Digitar Novo)..."
+3. Vai abrir uma caixinha para você digitar. Escreva o nome do novo curso.
+4. Salve o cadastro. Pronto! O novo curso já passa a valer no sistema e na planilha.
+
+
+================================================================================
+9. COMO INSTALAR O PAINEL NO CELULAR COMO UM APLICATIVO
+================================================================================
+Você pode colocar o ícone do Instituto Reis na tela inicial do seu celular:
+
+NO IPHONE (SAFARI):
+1. Abra o link do painel no navegador Safari.
+2. Toque no botão de "Compartilhar" (quadrado com uma setinha apontando para cima, no rodapé).
+3. Role as opções e toque em "Adicionar à Tela de Início".
+4. Toque em "Adicionar" no cantinho superior direito.
+5. Pronto! Um ícone de aplicativo do Instituto Reis será criado na tela do seu iPhone.
+
+NO ANDROID (GOOGLE CHROME):
+1. Abra o link do painel no aplicativo Chrome.
+2. Toque nos 3 pontinhos no canto superior direito.
+3. Toque em "Adicionar à tela inicial" ou "Instalar aplicativo".
+4. Confirme tocando em "Adicionar".
+5. Pronto! O painel fica salvo na gaveta de aplicativos como se fosse um app da Play Store.
+
+
+================================================================================
+10. ROTINA DIÁRIA RECOMENDADA PARA O LUCAS (CHECKLIST PRÁTICO)
+================================================================================
+
+⏰ 1. AO CHEGAR NA ESCOLA (09:00):
+   [ ] Abra a aba "Cobrança Preventiva" e clique na aba "Hoje".
+   [ ] Veja quem são os alunos que vencem hoje e fique atento aos comprovantes de PIX.
+   [ ] Conforme os alunos forem pagando, clique no botão verde "Marcar Pago".
+
+⏰ 2. DURANTE O EXPEDIENTE (MANHÃ E TARDE):
+   [ ] Se alguém chamar no WhatsApp querendo informações sobre curso: cadastre em "+ Novo Lead".
+   [ ] Se algum interessado responder às mensagens do robô:
+       👉 Clique IMEDIATAMENTE no botão roxo "ASSUMIR ATENDIMENTO" no card dele!
+       👉 Continue a conversa pelo WhatsApp com o seu toque humano de vendas.
+   [ ] Se o cliente fechar a matrícula:
+       👉 No CRM, clique no Troféu 🏆 ("Ganhou").
+       👉 Vá em Cobrança Preventiva e cadastre ele em "+ Novo Aluno".
+   [ ] Se o aluno pagar a mensalidade e você quiser programar o próximo mês:
+       👉 Abra o lápis ✏️ do aluno e clique no botão roxo "📅 Renovar Mensalidade (+1 Mês)".
+
+⏰ 3. NO FINAL DO DIA (17:00 / 18:00):
+   [ ] Dê uma passada rápida na aba "Sorteio QR Code".
+   [ ] Veja os novos participantes que entraram pelos panfletos.
+   [ ] Clique em "Ver Respostas" nos perfis mais interessantes e aperte "Transformar em Lead do CRM".
+
+
+================================================================================
+11. DÚVIDAS FREQUENTES (FAQ)
+================================================================================
+
+P: "O que acontece se eu esquecer de clicar em 'Assumir Atendimento' quando o lead responder?"
+R: O robô pode achar que o lead ainda não foi atendido e mandar a próxima mensagem
+   automática da cadência (D4 ou D7). Por isso, sempre que você começar a conversar
+   com um lead, clique no botão roxo "Assumir Atendimento" para pausar o robô!
+
+P: "O robô de cobrança vai cobrar um aluno que já pagou?"
+R: NUNCA! O robô só olha quem está com status PENDENTE. Se você clicou em "Marcar Pago"
+   ou se o status for CONCLUÍDO, o robô não manda nenhuma mensagem.
+
+P: "Posso alterar as informações direto na Planilha do Google?"
+R: Pode sim! Se você mudar o status ou a data na planilha, o painel recebe a mudança
+   automaticamente. Mas usar o painel é mais rápido, seguro e evita erros de digitação.
+
+P: "O que significa o número da parcela (ex: 1/6)?"
+R: Significa Parcela 1 de 6 meses. Quando o aluno paga a parcela 1 e você clica no
+   botão roxo de renovar mensalidade, o sistema já muda sozinho para 2/6!
+
+P: "Consigo acessar o painel de casa ou só na recepção?"
+R: Consegue de qualquer lugar! Basta abrir o link no seu celular ou computador pessoal
+   e entrar com o seu login.
+
+================================================================================
+               Instituto Reis - Transformando Vidas pela Profissão
 ================================================================================
