@@ -121,17 +121,16 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
           {/* Usuário, Instalação PWA e Logout */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Botão Instalar Aplicativo */}
+            {/* Botão Instalar Aplicativo (Desktop & Tablets) */}
             <button
               onClick={() => setIsModalInstalarOpen(true)}
-              title="Instalar Aplicativo no Celular ou Computador"
-              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-brand-600/30 to-brand-500/20 hover:from-brand-600/50 hover:to-brand-500/40 text-brand-300 hover:text-white border border-brand-500/30 flex items-center gap-1.5 text-xs font-bold transition-all duration-200 cursor-pointer shadow-sm shadow-brand-500/10"
+              title="Instalar Aplicativo Oficial no seu Computador ou Celular"
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
             >
-              <Download className="w-3.5 h-3.5 text-brand-400" />
-              <span className="hidden xs:inline sm:inline">Instalar App</span>
-              {deferredPrompt && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              )}
+              <Download className="w-4 h-4 text-white" />
+              <span className="hidden sm:inline">Instalar Aplicativo</span>
+              <span className="sm:hidden text-xs">Instalar</span>
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
             </button>
 
             <div className="hidden lg:flex flex-col text-right">
@@ -152,9 +151,9 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
         </div>
       </header>
 
-      {/* BOTTOM NAVIGATION (MOBILE APENAS) */}
+      {/* BOTTOM NAVIGATION (MOBILE APENAS - 4 COLUNAS: COBRANÇA, CRM, SORTEIO E INSTALAR) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe">
-        <div className="grid grid-cols-3 h-16">
+        <div className="grid grid-cols-4 h-16">
           <button
             onClick={() => setActiveTab('cobranca')}
             className={`flex flex-col items-center justify-center gap-1 relative transition-all duration-200 ${
@@ -162,7 +161,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
             }`}
           >
             {activeTab === 'cobranca' && (
-              <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
+              <span className="absolute top-0 w-10 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
             )}
             <BadgeDollarSign className="w-5 h-5" />
             <span className="text-[10px]">Cobrança</span>
@@ -175,7 +174,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
             }`}
           >
             {activeTab === 'crm' && (
-              <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
+              <span className="absolute top-0 w-10 h-1 bg-gradient-to-r from-brand-500 to-brand-400 rounded-b-full"></span>
             )}
             <Users className="w-5 h-5" />
             <span className="text-[10px]">CRM</span>
@@ -188,10 +187,22 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
             }`}
           >
             {activeTab === 'sorteio' && (
-              <span className="absolute top-0 w-12 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-b-full"></span>
+              <span className="absolute top-0 w-10 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-b-full"></span>
             )}
             <Trophy className="w-5 h-5" />
             <span className="text-[10px]">Sorteio</span>
+          </button>
+
+          {/* 4ª Aba: Instalar Aplicativo no Celular */}
+          <button
+            onClick={() => setIsModalInstalarOpen(true)}
+            className="flex flex-col items-center justify-center gap-1 relative text-emerald-400 font-bold transition-all duration-200 cursor-pointer active:scale-95"
+          >
+            <div className="relative">
+              <Smartphone className="w-5 h-5 text-emerald-400" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+            </div>
+            <span className="text-[10px] text-emerald-300 font-bold">Instalar</span>
           </button>
         </div>
       </div>

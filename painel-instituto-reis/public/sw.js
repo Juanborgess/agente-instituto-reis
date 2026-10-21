@@ -70,12 +70,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 1. REQUISIÇÕES DE API / DADOS EM TEMPO REAL: NETWORK-ONLY
-  // Supabase, Google Apps Script e APIs externas NUNCA devem ser cacheadas
+  // Supabase, Google Apps Script, version.json e APIs externas NUNCA devem ser cacheadas
   if (
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('script.google.com') ||
     url.hostname.includes('googleapis.com') ||
-    url.hostname.includes('facebook.com')
+    url.hostname.includes('facebook.com') ||
+    url.pathname.includes('version.json')
   ) {
     return; // Deixa o navegador executar diretamente pela rede
   }

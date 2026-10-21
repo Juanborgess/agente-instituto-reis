@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Lock, Mail, ArrowRight, AlertCircle, Sparkles, ShieldCheck } from 'lucide-react'
+import { Lock, Mail, ArrowRight, AlertCircle, Sparkles, ShieldCheck, Smartphone } from 'lucide-react'
+import ModalInstalarApp from '../components/ModalInstalarApp'
 
 export default function LoginView({ onLoginSuccess }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [modalInstalarAberto, setModalInstalarAberto] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -134,7 +136,26 @@ export default function LoginView({ onLoginSuccess }) {
             <span>Acesso Seguro Restrito à Equipe</span>
           </div>
         </div>
+
+        {/* Botão de Instalação na Tela de Login */}
+        <div className="mt-5 text-center">
+          <button
+            type="button"
+            onClick={() => setModalInstalarAberto(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/10 active:scale-95"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-400" />
+            <span>Instalar Aplicativo no seu Celular ou PC</span>
+          </button>
+        </div>
       </div>
+
+      {/* Modal de Instalação */}
+      <ModalInstalarApp
+        isOpen={modalInstalarAberto}
+        onClose={() => setModalInstalarAberto(false)}
+      />
     </div>
   )
 }
+
