@@ -15,7 +15,7 @@ const ABA_CRM = "CRM_Vendas";
 
 const PROPRIEDADES = PropertiesService.getScriptProperties();
 const SUPABASE_URL = PROPRIEDADES.getProperty("SUPABASE_URL") || "https://szoypbzmqgidzadjxbvs.supabase.co";
-const SUPABASE_KEY = PROPRIEDADES.getProperty("SUPABASE_KEY") || "";
+const SUPABASE_KEY = PROPRIEDADES.getProperty("SUPABASE_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6b3lwYnptcWdpZHphZGp4YnZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjAwODI0NSwiZXhwIjoyMTA3NTg0MjQ1fQ.ImWBmPW1ASOsq9jc9ruFZZxNfzYHtlBnmAyJA2qQAII";
 
 /**
  * Menu Superior Automático ao abrir a planilha
@@ -81,8 +81,15 @@ function doPost(e) {
       return processarExclusaoSorteio(doc, data);
     }
 
-    // 4. REQUISIÇÕES DO SORTEIO QR CODE (100% preservado)
-    return processarSorteioQRCode(doc, data);
+    // 4. REQUISIÇÕES DO FORMULÁRIO DO SITE (Sorteio QR Code)
+    // Proteção: só cadastra se for ação de sorteio ou tiver dados válidos de cadastro
+    if (data.action === "novo_sorteio" || data.nome_completo || data.curso_interesse || data.whatsapp) {
+      return processarSorteioQRCode(doc, data);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "ignored", message: "Ação não reconhecida" }))
+      .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     return ContentService
@@ -104,6 +111,9 @@ function doGet() {
 function processarSorteioQRCode(doc, data) {
   let sheet = doc.getSheetByName(SHEET_NAME_SORTEIO);
   if (!sheet) { sheet = doc.getSheets()[0]; }
+
+  // Limpa eventuais linhas em branco/fantasmas antes de calcular o próximo número
+  limparLinhasFantasmasSorteio(sheet);
 
   const numeroParticipante = sheet.getLastRow();
 
@@ -184,6 +194,10 @@ function processarExclusaoSorteio(doc, body) {
 
   if (linhaEncontrada !== -1) {
     sheet.deleteRow(linhaEncontrada);
+    
+    // Limpa também qualquer linha fantasma sem dados
+    limparLinhasFantasmasSorteio(sheet);
+
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
       action: "excluir_participante_sorteio",
@@ -191,10 +205,27 @@ function processarExclusaoSorteio(doc, body) {
       message: "Participante excluído com sucesso da planilha Sorteio_QR_Code"
     })).setMimeType(ContentService.MimeType.JSON);
   } else {
+    // Mesmo se não achou pelo número, remove linhas fantasmas residuais
+    limparLinhasFantasmasSorteio(sheet);
+
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: "Participante não localizado na planilha Sorteio_QR_Code para exclusão"
     })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Remove linhas fantasmas (linhas que só têm o número ou dados em branco sem nome nem WhatsApp)
+ */
+function limparLinhasFantasmasSorteio(sheet) {
+  const max = sheet.getLastRow();
+  for (let r = max; r >= 2; r--) {
+    const nome = String(sheet.getRange(r, 11).getValue() || "").trim();
+    const tel = String(sheet.getRange(r, 13).getValue() || "").trim();
+    if (!nome && !tel) {
+      sheet.deleteRow(r);
+    }
   }
 }
 
