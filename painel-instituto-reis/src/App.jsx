@@ -60,7 +60,7 @@ export default function App() {
       />
 
       {/* Conteúdo Principal da Aba Selecionada */}
-      <main className="flex-1 w-full animate-fadeIn">
+      <main className="flex-1 w-full animate-fadeIn pb-24 md:pb-8">
         {activeTab === 'cobranca' ? (
           <CobrancaView />
         ) : activeTab === 'crm' ? (

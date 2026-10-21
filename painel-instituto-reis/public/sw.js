@@ -29,6 +29,14 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Mensagens vindas do cliente
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+
 // Ativação e limpeza de versões antigas de cache
 self.addEventListener('activate', (event) => {
   event.waitUntil(

@@ -52,6 +52,36 @@
 }
 
 /* Safe areas for mobile devices */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 1rem);
 }
+
+/* Previne zoom acidental por duplo-toque e remove delay de 300ms */
+html, body, button, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Previne zoom automático do iOS ao focar em inputs (exige no mínimo 16px no mobile) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Previne arrasto e recuo elástico (rubber-banding) no PWA instalado */
+body {
+  overscroll-behavior-y: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Permite seleção de texto apenas onde o usuário precisa copiar ou digitar */
+input, textarea, [contenteditable="true"], .selectable-text, table, td, th {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
