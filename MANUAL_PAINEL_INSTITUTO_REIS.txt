@@ -3,7 +3,7 @@
                     Guia Prático de Trabalho para a Recepção
 ================================================================================
 
-Fala, imrão! Esse manual foi preparado especialmente para você e toda a equipe
+Fala, irmão! Esse manual foi preparado especialmente para você e toda a equipe
 da recepção do Instituto Reis dominarem 100% do novo Painel no dia a dia.
 
 Aqui está tudo o que você precisa saber, explicado de forma simples, direta e
@@ -252,7 +252,7 @@ RECURSOS PRINCIPAIS DA ABA DE SORTEIO:
 4. 🎲 Botão Dourado "Realizar Sorteio" (Roleta Oficial ao Vivo):
    • Perfeito para projetar na TV da recepção ou gravar a tela para o Instagram!
    • Você pode filtrar: sortear entre "Todos" ou só de um curso específico (ex: só Barbeiro).
-   • A caixinha "Não sortear quem já ganhou" vem marcada por padrão para ninguém ganhar bis.
+   • A caixinha "Não sortear quem já ganhou" vem marcada por padrão.
    • Clique no botão dourado "Girar Roleta e Sortear":
      Os nomes e números giram na tela em alta velocidade por 3,5 segundos com clima de suspense.
    • Quando a roleta para, explode a tela de vitória com o nome do ganhador e um botão verde
@@ -320,23 +320,40 @@ Você NÃO precisa chamar suporte nem mexer em programação:
 
 
 ================================================================================
-9. COMO INSTALAR O PAINEL NO CELULAR COMO UM APLICATIVO
+9. COMO INSTALAR O PAINEL NO CELULAR OU COMPUTADOR (APLICATIVO PWA)
 ================================================================================
-Você pode colocar o ícone do Instituto Reis na tela inicial do seu celular:
+O painel agora é um aplicativo oficial completo (PWA)! Você não precisa mais ficar
+abrindo o navegador nem digitando link toda hora.
 
-NO IPHONE (SAFARI):
-1. Abra o link do painel no navegador Safari.
-2. Toque no botão de "Compartilhar" (quadrado com uma setinha apontando para cima, no rodapé).
-3. Role as opções e toque em "Adicionar à Tela de Início".
-4. Toque em "Adicionar" no cantinho superior direito.
-5. Pronto! Um ícone de aplicativo do Instituto Reis será criado na tela do seu iPhone.
+👉 JEITO MAIS FÁCIL:
+1. Abra o painel no celular ou no computador.
+2. No topo da tela, clique no novo botão:
+   👉 "📥 Instalar App"
+3. O próprio painel vai abrir uma janela mostrando o passo a passo exato do seu
+   aparelho (seja Android, iPhone ou Computador PC/Mac) e, se o seu navegador permitir,
+   vai aparecer um botão para instalar com 1 único clique!
+
+👉 PASSO A PASSO MANUAL (SE PREFERIR):
 
 NO ANDROID (GOOGLE CHROME):
-1. Abra o link do painel no aplicativo Chrome.
-2. Toque nos 3 pontinhos no canto superior direito.
-3. Toque em "Adicionar à tela inicial" ou "Instalar aplicativo".
-4. Confirme tocando em "Adicionar".
-5. Pronto! O painel fica salvo na gaveta de aplicativos como se fosse um app da Play Store.
+1. Abra o link do painel no navegador Chrome.
+2. Toque nos 3 pontinhos (⋮) no canto superior direito.
+3. Toque em "Instalar aplicativo" ou "Adicionar à tela inicial".
+4. Confirme tocando em "Instalar".
+5. Pronto! O app fica salvo na sua tela e gaveta de aplicativos.
+
+NO IPHONE OU IPAD (SAFARI):
+1. Abra o link do painel no navegador Safari oficial da Apple.
+2. Toque no botão de "Compartilhar" (quadradinho azul com uma setinha para cima, no rodapé).
+3. Role a lista e toque em "Adicionar à Tela de Início".
+4. Toque em "Adicionar" no canto superior direito.
+5. Pronto! O ícone dourado do Instituto Reis fica na sua tela como um app da App Store.
+
+NO COMPUTADOR (CHROME OU EDGE):
+1. Acesse o painel pelo Google Chrome ou Microsoft Edge.
+2. Olhe no cantinho direito da barra onde você digita o link (ao lado da estrelinha).
+3. Clique no ícone de "Instalar" (um computadorzinho 💻 ou sinal de +).
+4. Clique em "Instalar". O painel vira uma janela independente sem abas de navegador!
 
 
 ================================================================================

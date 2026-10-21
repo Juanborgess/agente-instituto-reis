@@ -1,7 +1,37 @@
-import React from 'react'
-import { BadgeDollarSign, Users, LogOut, Sparkles, Trophy } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { BadgeDollarSign, Users, LogOut, Sparkles, Trophy, Download, Smartphone } from 'lucide-react'
+import ModalInstalarApp from './ModalInstalarApp'
 
 export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, countCobranca, countCRM, countSorteio }) {
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [isModalInstalarOpen, setIsModalInstalarOpen] = useState(false)
+
+  // Escuta o evento nativo de instalação do PWA no Chrome / Edge / Android
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
+
+  const handleInstallNative = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') {
+        console.log('[PWA] Usuário instalou o aplicativo!')
+      }
+      setDeferredPrompt(null)
+      setIsModalInstalarOpen(false)
+    }
+  }
+
   return (
     <>
       {/* HEADER DESKTOP / TABLET */}
@@ -89,8 +119,21 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
             </button>
           </nav>
 
-          {/* Usuário e Logout */}
-          <div className="flex items-center gap-3">
+          {/* Usuário, Instalação PWA e Logout */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Botão Instalar Aplicativo */}
+            <button
+              onClick={() => setIsModalInstalarOpen(true)}
+              title="Instalar Aplicativo no Celular ou Computador"
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-brand-600/30 to-brand-500/20 hover:from-brand-600/50 hover:to-brand-500/40 text-brand-300 hover:text-white border border-brand-500/30 flex items-center gap-1.5 text-xs font-bold transition-all duration-200 cursor-pointer shadow-sm shadow-brand-500/10"
+            >
+              <Download className="w-3.5 h-3.5 text-brand-400" />
+              <span className="hidden xs:inline sm:inline">Instalar App</span>
+              {deferredPrompt && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              )}
+            </button>
+
             <div className="hidden lg:flex flex-col text-right">
               <span className="text-xs font-semibold text-white">Equipe Recepção</span>
               <span className="text-[11px] text-slate-400 truncate max-w-[150px]">
@@ -152,7 +195,16 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
           </button>
         </div>
       </div>
+
+      {/* MODAL PASSO A PASSO DE INSTALAÇÃO DO APP (ANDROID / IOS / PC) */}
+      <ModalInstalarApp
+        isOpen={isModalInstalarOpen}
+        onClose={() => setIsModalInstalarOpen(false)}
+        deferredPrompt={deferredPrompt}
+        onInstallNative={handleInstallNative}
+      />
     </>
   )
 }
+
 
