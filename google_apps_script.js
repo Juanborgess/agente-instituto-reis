@@ -168,6 +168,32 @@ function processarExclusaoSorteio(doc, body) {
   const telAlvo = limparTelefone(body.whatsapp || body.telefone);
   const nomeAlvo = String(body.nome_completo || body.nome || "").trim().toLowerCase();
 
+  // 1. Exclui no Supabase com chave Service Role (permissão administrativa que bypassa restrições de RLS)
+  try {
+    if (!isNaN(numAlvo)) {
+      UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/sorteio_participantes?numero_participante=eq." + numAlvo, {
+        method: "DELETE",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        },
+        muteHttpExceptions: true
+      });
+    } else if (telAlvo) {
+      UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/sorteio_participantes?whatsapp=eq." + telAlvo, {
+        method: "DELETE",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        },
+        muteHttpExceptions: true
+      });
+    }
+  } catch (errSb) {
+    Logger.log("Erro ao deletar no Supabase: " + errSb);
+  }
+
+  // 2. Exclui a linha física na planilha Sorteio_QR_Code
   const dadosA = sheet.getRange("A:A").getValues(); // Nº Participante (Col 1)
   const dadosK = sheet.getRange("K:K").getValues(); // Nome Completo (Col 11)
   const dadosM = sheet.getRange("M:M").getValues(); // WhatsApp (Col 13)

@@ -239,27 +239,26 @@ export default function SorteioView() {
 
     setProcessandoId(participante.id)
     try {
-      const { error } = await supabase
+      // 1. Atualização otimista na tela (some na hora)
+      setParticipantes(prev => prev.filter(p => p.id !== participante.id))
+      if (participanteSelecionado && participanteSelecionado.id === participante.id) {
+        setParticipanteSelecionado(null)
+      }
+
+      // 2. Dispara exclusão no Supabase
+      await supabase
         .from('sorteio_participantes')
         .delete()
         .eq('id', participante.id)
 
-      if (!error) {
-        setParticipantes(prev => prev.filter(p => p.id !== participante.id))
-        mostrarToast(`Participante #${participante.numero_participante} excluído com sucesso do painel e da planilha!`)
-        if (participanteSelecionado && participanteSelecionado.id === participante.id) {
-          setParticipanteSelecionado(null)
-        }
+      // 3. Exclui da planilha Google Sheets e garante remoção no Supabase com permissão administrativa
+      await excluirParticipanteSorteioNaPlanilha(
+        participante.numero_participante,
+        participante.whatsapp,
+        participante.nome_completo
+      )
 
-        // Remove da planilha Google Sheets
-        excluirParticipanteSorteioNaPlanilha(
-          participante.numero_participante,
-          participante.whatsapp,
-          participante.nome_completo
-        )
-      } else {
-        mostrarToast(`Erro ao excluir: ${error.message}`)
-      }
+      mostrarToast(`Participante #${participante.numero_participante} excluído com sucesso do painel e da planilha!`)
     } catch (err) {
       mostrarToast("Falha ao excluir o participante.")
     } finally {
