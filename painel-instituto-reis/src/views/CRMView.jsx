@@ -186,16 +186,22 @@ export default function CRMView() {
       mostrarToast('Nenhum lead na listagem para exportar.')
       return
     }
-    const dados = leadsFiltrados.map(l => ({
-      'Nome do Lead': l.nome_lead || '',
-      'WhatsApp': l.telefone || '',
-      'Curso de Interesse': l.curso_interesse || '',
-      'Status no Funil': l.status_funil || '',
-      'Data de Entrada': formatarDataBR(l.data_entrada)
-    }))
-    const dataHoje = new Date().toISOString().split('T')[0]
-    exportarParaCSV(dados, `Leads_CRM_${dataHoje}`)
-    mostrarToast(`Exportando ${leadsFiltrados.length} leads para Excel/CSV!`)
+    try {
+      const dados = leadsFiltrados.map(l => ({
+        'Nome do Lead': l.nome_lead || '',
+        'WhatsApp': l.telefone || '',
+        'Curso de Interesse': l.curso_interesse || '',
+        'Status no Funil': l.status_funil || '',
+        'Data de Entrada': formatarDataBR(l.data_entrada)
+      }))
+      const sucesso = exportarParaCSV(dados, 'Leads_CRM')
+      if (sucesso) {
+        mostrarToast(`Exportando ${leadsFiltrados.length} leads para Excel/CSV!`)
+      }
+    } catch (err) {
+      console.error("Erro na exportação de leads:", err)
+      mostrarToast("Erro ao preparar a exportação para Excel.")
+    }
   }
 
   const formatarDataBR = (dataIso) => {

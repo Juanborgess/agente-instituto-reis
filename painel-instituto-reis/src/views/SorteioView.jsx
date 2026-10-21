@@ -197,19 +197,35 @@ export default function SorteioView() {
       mostrarToast('Nenhum participante na listagem para exportar.')
       return
     }
-    const dados = participantesFiltrados.map(p => ({
-      'Nº': p.numero_participante || '',
-      'Nome Completo': p.nome_completo || '',
-      'WhatsApp': p.whatsapp || '',
-      'Bairro': p.bairro || '',
-      'Curso de Interesse': p.curso_interesse || '',
-      'Impedimento': p.impedimento || '',
-      'Melhor Horário': p.melhor_horario || '',
-      'Data/Hora Envio': p.data_hora_envio ? new Date(p.data_hora_envio).toLocaleString('pt-BR') : ''
-    }))
-    const dataHoje = new Date().toISOString().split('T')[0]
-    exportarParaCSV(dados, `Participantes_Sorteio_${dataHoje}`)
-    mostrarToast(`Exportando ${participantesFiltrados.length} respostas para Excel/CSV!`)
+    try {
+      const dados = participantesFiltrados.map(p => ({
+        'Nº': p.numero_participante || '',
+        'Nome Completo': p.nome_completo || '',
+        'WhatsApp': p.whatsapp || '',
+        'Idade': p.idade || '',
+        'Bairro': p.bairro || '',
+        'Email': p.email || '',
+        'Curso de Interesse': p.curso_interesse || '',
+        'Sorteado': p.sorteado ? 'SIM' : 'NÃO',
+        'Enviado ao CRM': p.enviado_crm ? 'SIM' : 'NÃO',
+        'Impedimento p/ Começar': p.impedimento || '',
+        'Contato Anterior': p.contato_anterior || '',
+        'Nível de Conhecimento': p.conhecimento || '',
+        'Trabalha Atualmente': p.trabalha || '',
+        'Área Atual': p.area_atual || '',
+        'Objetivo Próximos Meses': p.objetivo_meses || '',
+        'Objetivo Longo Prazo': p.objetivo_profissional || '',
+        'O que Mudaria na Vida': p.o_que_mudaria || '',
+        'Data/Hora Envio': p.data_hora || (p.created_at ? new Date(p.created_at).toLocaleString('pt-BR') : '')
+      }))
+      const sucesso = exportarParaCSV(dados, 'Participantes_Sorteio')
+      if (sucesso) {
+        mostrarToast(`Exportando ${participantesFiltrados.length} respostas para Excel/CSV!`)
+      }
+    } catch (err) {
+      console.error("Erro na exportação do sorteio:", err)
+      mostrarToast("Erro ao preparar a exportação para Excel.")
+    }
   }
 
   return (

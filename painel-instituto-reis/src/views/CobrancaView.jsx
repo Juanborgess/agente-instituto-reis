@@ -204,18 +204,24 @@ export default function CobrancaView() {
       mostrarToast('Nenhum aluno na listagem para exportar.')
       return
     }
-    const dados = alunosFiltrados.map(a => ({
-      'Nome do Aluno': a.nome_aluno || '',
-      'WhatsApp': a.telefone_whatsapp || '',
-      'Curso': a.curso || '',
-      'Vencimento': formatarDataBR(a.vencimento_atual),
-      'Status': a.status_pagamento || '',
-      'Valor Parcela': a.valor_parcela ? `R$ ${Number(a.valor_parcela).toFixed(2).replace('.', ',')}` : 'R$ 0,00',
-      'Parcela': a.parcela_atual || ''
-    }))
-    const dataHoje = new Date().toISOString().split('T')[0]
-    exportarParaCSV(dados, `Alunos_Cobranca_${dataHoje}`)
-    mostrarToast(`Exportando ${alunosFiltrados.length} alunos para Excel/CSV!`)
+    try {
+      const dados = alunosFiltrados.map(a => ({
+        'Nome do Aluno': a.nome_aluno || '',
+        'WhatsApp': a.telefone_whatsapp || '',
+        'Curso': a.curso || '',
+        'Vencimento': formatarDataBR(a.vencimento_atual),
+        'Status': a.status_pagamento || '',
+        'Valor Parcela': a.valor_parcela ? `R$ ${Number(a.valor_parcela).toFixed(2).replace('.', ',')}` : 'R$ 0,00',
+        'Parcela': a.parcela_atual || ''
+      }))
+      const sucesso = exportarParaCSV(dados, 'Alunos_Cobranca')
+      if (sucesso) {
+        mostrarToast(`Exportando ${alunosFiltrados.length} alunos para Excel/CSV!`)
+      }
+    } catch (err) {
+      console.error("Erro na exportação de alunos:", err)
+      mostrarToast("Erro ao preparar a exportação para Excel.")
+    }
   }
 
   const formatarDataBR = (dataIso) => {
