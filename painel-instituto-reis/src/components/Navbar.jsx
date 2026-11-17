@@ -36,43 +36,43 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
     <>
       {/* HEADER DESKTOP / TABLET */}
       <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo e Nome */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
               <img 
                 src="/logo-instituto.png" 
                 alt="Instituto Reis" 
                 className="w-full h-full object-contain rounded-full" 
               />
             </div>
-            <div>
-              <div className="font-extrabold text-white text-base tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="font-extrabold text-white text-sm lg:text-base tracking-tight flex items-center gap-2 whitespace-nowrap">
                 <span>Instituto Reis</span>
-                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full">
+                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full whitespace-nowrap shrink-0">
                   Painel Oficial
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
+              <p className="text-[11px] text-slate-400 hidden lg:block whitespace-nowrap leading-tight">
                 Cobrança, CRM & Sorteio QR Code
               </p>
             </div>
           </div>
 
           {/* Abas de Navegação (Desktop) */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-2xl border border-white/5">
+          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-2xl border border-white/5 shrink-0">
             <button
               onClick={() => setActiveTab('cobranca')}
-              className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-2.5 lg:px-3.5 py-2 rounded-xl text-xs lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 activeTab === 'cobranca'
                   ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <BadgeDollarSign className="w-4 h-4" />
+              <BadgeDollarSign className="w-4 h-4 shrink-0" />
               <span>Cobrança Preventiva</span>
               {countCobranca > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
                   activeTab === 'cobranca' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-300'
                 }`}>
                   {countCobranca}
@@ -82,16 +82,16 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
             <button
               onClick={() => setActiveTab('crm')}
-              className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-2.5 lg:px-3.5 py-2 rounded-xl text-xs lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 activeTab === 'crm'
                   ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-4 h-4 shrink-0" />
               <span>CRM de Vendas</span>
               {countCRM > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
                   activeTab === 'crm' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-300'
                 }`}>
                   {countCRM}
@@ -101,16 +101,16 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
             <button
               onClick={() => setActiveTab('sorteio')}
-              className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-2.5 lg:px-3.5 py-2 rounded-xl text-xs lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 activeTab === 'sorteio'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Trophy className="w-4 h-4 text-amber-300" />
+              <Trophy className="w-4 h-4 text-amber-300 shrink-0" />
               <span>Sorteio QR Code</span>
               {countSorteio > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
                   activeTab === 'sorteio' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-300'
                 }`}>
                   {countSorteio}
@@ -120,31 +120,30 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
           </nav>
 
           {/* Usuário, Instalação PWA e Logout */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Botão Instalar Aplicativo (Desktop & Tablets) */}
             <button
               onClick={() => setIsModalInstalarOpen(true)}
               title="Instalar Aplicativo Oficial no seu Computador ou Celular"
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
+              className="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
             >
-              <Download className="w-4 h-4 text-white" />
-              <span className="hidden sm:inline">Instalar Aplicativo</span>
-              <span className="sm:hidden text-xs">Instalar</span>
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+              <Download className="w-4 h-4 text-white shrink-0" />
+              <span>Instalar <span className="hidden lg:inline">Aplicativo</span></span>
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0"></span>
             </button>
 
-            <div className="hidden lg:flex flex-col text-right">
+            <div className="hidden xl:flex flex-col text-right whitespace-nowrap">
               <span className="text-xs font-semibold text-white">Equipe Recepção</span>
-              <span className="text-[11px] text-slate-400 truncate max-w-[150px]">
+              <span className="text-[11px] text-slate-400 truncate max-w-[140px]">
                 {userEmail}
               </span>
             </div>
             <button
               onClick={onLogout}
               title="Encerrar Sessão"
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900/60 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-white/5 hover:border-red-500/20 flex items-center gap-2 text-xs font-medium transition-all duration-200 cursor-pointer"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900/60 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-white/5 hover:border-red-500/20 flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
