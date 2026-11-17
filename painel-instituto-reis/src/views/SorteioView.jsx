@@ -267,11 +267,11 @@ export default function SorteioView() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-32 md:pb-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 pb-8 md:pb-12">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed top-20 right-4 z-50 glass-panel border border-brand-500/30 bg-slate-900/90 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-brand-400" />
+        <div className="fixed toast-safe left-4 right-4 sm:left-auto sm:right-4 z-50 glass-panel border border-brand-500/30 bg-slate-900/90 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-5 h-5 text-brand-400 shrink-0" />
           <span className="text-sm font-semibold">{toastMsg}</span>
         </div>
       )}
@@ -305,7 +305,7 @@ export default function SorteioView() {
       {/* HEADER DA SEÇÃO & BOTÃO DO SORTEADOR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex flex-wrap items-center gap-2">
             <span>Sorteio & Pesquisa QR Code</span>
             <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
               {metricas.total} Participantes

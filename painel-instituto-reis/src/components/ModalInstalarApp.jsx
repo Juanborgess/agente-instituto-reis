@@ -51,10 +51,10 @@ export default function ModalInstalarApp({ isOpen, onClose, deferredPrompt, onIn
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center modal-safe-overlay bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer"
     >
       <div 
-        className="relative w-full max-w-xl bg-slate-900/95 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] overscroll-contain cursor-default"
+        className="relative w-full max-w-xl bg-slate-900/95 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col modal-safe-card overscroll-contain cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         {/* CABEÇALHO */}

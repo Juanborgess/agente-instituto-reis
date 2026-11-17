@@ -35,7 +35,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
+      <div className="min-h-[100dvh] pt-safe pb-safe px-safe bg-slate-950 flex flex-col items-center justify-center">
         <div className="w-16 h-16 rounded-full bg-white p-1 shadow-2xl ring-4 ring-white/10 mb-4 animate-pulse overflow-hidden flex items-center justify-center">
           <img src="/logo-instituto.png" alt="Instituto Reis" className="w-full h-full object-contain rounded-full" />
         </div>
@@ -50,7 +50,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0b101b] to-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-slate-950 via-[#0b101b] to-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
       {/* Navegação Superior & Mobile */}
       <Navbar
         activeTab={activeTab}
@@ -60,7 +60,7 @@ export default function App() {
       />
 
       {/* Conteúdo Principal da Aba Selecionada */}
-      <main className="flex-1 w-full animate-fadeIn pb-24 md:pb-8">
+      <main className="flex-1 w-full animate-fadeIn px-safe pb-nav-safe md:pb-8">
         {activeTab === 'cobranca' ? (
           <CobrancaView />
         ) : activeTab === 'crm' ? (

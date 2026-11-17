@@ -34,9 +34,9 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
   return (
     <>
-      {/* HEADER DESKTOP / TABLET */}
-      <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
+      {/* HEADER DESKTOP / TABLET / MOBILE */}
+      <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 backdrop-blur-xl pt-safe px-safe">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo e Nome */}
           <div className="flex items-center gap-2.5 shrink-0 min-w-0">
             <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -120,14 +120,14 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
           </nav>
 
           {/* Usuário, Instalação PWA e Logout */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Botão Instalar Aplicativo (Desktop & Tablets) */}
             <button
               onClick={() => setIsModalInstalarOpen(true)}
               title="Instalar Aplicativo Oficial no seu Computador ou Celular"
-              className="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
             >
-              <Download className="w-4 h-4 text-white shrink-0" />
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" />
               <span>Instalar <span className="hidden lg:inline">Aplicativo</span></span>
               <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0"></span>
             </button>
@@ -151,7 +151,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
       </header>
 
       {/* BOTTOM NAVIGATION (MOBILE APENAS - 4 COLUNAS: COBRANÇA, CRM, SORTEIO E INSTALAR) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe px-safe">
         <div className="grid grid-cols-4 h-16">
           <button
             onClick={() => setActiveTab('cobranca')}

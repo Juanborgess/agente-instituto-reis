@@ -70,8 +70,8 @@ export default function ModalSorteador({ isOpen, onClose, participantes, onGanha
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-xl glass-panel rounded-3xl p-6 sm:p-8 border border-amber-500/30 shadow-2xl relative text-center max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-safe-overlay bg-black/80 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-xl glass-panel rounded-3xl p-5 sm:p-8 border border-amber-500/30 shadow-2xl relative text-center modal-safe-card overflow-y-auto">
         {/* Botão Fechar */}
         <button
           onClick={onClose}

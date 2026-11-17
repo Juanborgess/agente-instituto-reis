@@ -6,10 +6,14 @@
   * {
     border-color: rgba(255, 255, 255, 0.08);
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     background-color: #090d16;
     color: #f1f5f9;
     min-height: 100vh;
+    min-height: 100dvh;
     min-height: -webkit-fill-available;
     overflow-x: hidden;
   }
@@ -51,12 +55,31 @@
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-/* Safe areas for mobile devices */
+/* Safe areas for mobile devices (iPhone Notch, Dynamic Island & Home Indicator) */
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 1rem);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+.pb-nav-safe {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+.toast-safe {
+  top: calc(4.75rem + env(safe-area-inset-top, 0px));
+}
+.modal-safe-overlay {
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+.modal-safe-card {
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 }
 
 /* Previne zoom acidental por duplo-toque e remove delay de 300ms */

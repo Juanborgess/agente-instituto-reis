@@ -38,12 +38,14 @@ export default function LoginView({ onLoginSuccess }) {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-[100dvh] w-full flex items-center justify-center pt-safe pb-safe px-safe relative overflow-x-hidden overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Background Glows */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+      </div>
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-10">
         {/* Card Principal */}
         <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/10 backdrop-blur-2xl">
           {/* Header & Logo */}
