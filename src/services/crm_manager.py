@@ -39,14 +39,39 @@ def obter_aba_crm():
     planilha = cliente.open_by_key(SPREADSHEET_ID)
     return planilha.worksheet(ABA_CRM)
 
+def limpar_telefone(telefone: str) -> str:
+    """Remove caracteres não numéricos e garante o DDI 55 para números brasileiros."""
+    if not telefone:
+        return ""
+    apenas_numeros = re.sub(r"\D", "", str(telefone).strip())
+    if not apenas_numeros:
+        return ""
+    if len(apenas_numeros) in [10, 11] and not apenas_numeros.startswith("55"):
+        apenas_numeros = "55" + apenas_numeros
+    return apenas_numeros
+
+def obter_primeira_linha_vazia(aba) -> int:
+    """Retorna o índice da primeira linha vazia na coluna A (ignorando cabeçalho)."""
+    col_a = aba.col_values(1)
+    for idx, val in enumerate(col_a[1:], start=2):
+        if not val or not str(val).strip():
+            return idx
+    return len(col_a) + 1
+
 def formatar_data_para_br(data_iso: str | None) -> str:
-    """Converte YYYY-MM-DD para DD/MM/AAAA."""
+    """Converte YYYY-MM-DD (ou ISO timestamp) para DD/MM/AAAA."""
     if not data_iso:
         return ""
-    try:
-        return datetime.strptime(str(data_iso).strip(), "%Y-%m-%d").strftime("%d/%m/%Y")
-    except ValueError:
-        return str(data_iso)
+    texto = str(data_iso).strip()
+    if not texto:
+        return ""
+    data_parte = texto.split("T")[0].split(" ")[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(data_parte, fmt).strftime("%d/%m/%Y")
+        except ValueError:
+            pass
+    return texto
 
 def buscar_leads_cadencia():
     """
@@ -66,13 +91,16 @@ def buscar_leads_cadencia():
         leads_sb = res.data or []
         print(f"[Supabase] {len(leads_sb)} leads elegiveis encontrados no banco de dados.")
 
+        if not leads_sb:
+            return []
+
         # Mapeia linhas físicas da planilha para manter paridade documental
         mapa_linhas_sheets = {}
         try:
             aba = obter_aba_crm()
             linhas_sheet = aba.get_all_records()
             for idx, r in enumerate(linhas_sheet, start=2):
-                tel = re.sub(r"\D", "", str(r.get("Telefone", "")))
+                tel = limpar_telefone(r.get("Telefone", ""))
                 curso = str(r.get("Curso_Interesse", "")).strip().lower()
                 mapa_linhas_sheets[(tel, curso)] = idx
         except Exception as e_sheet:
@@ -80,7 +108,7 @@ def buscar_leads_cadencia():
 
         leads_formatados = []
         for lead in leads_sb:
-            tel_limpo = re.sub(r"\D", "", str(lead.get("telefone", "")))
+            tel_limpo = limpar_telefone(lead.get("telefone", ""))
             curso = str(lead.get("curso_interesse", "")).strip()
             chave = (tel_limpo, curso.lower())
 
@@ -113,6 +141,9 @@ def buscar_leads_cadencia():
             for index, linha in enumerate(registros, start=2):
                 status = str(linha.get("Status_Funil", "")).strip()
                 if status in ["Novo", "Em Cadência"]:
+                    linha["Telefone"] = limpar_telefone(linha.get("Telefone", ""))
+                    linha["Data_Entrada"] = formatar_data_para_br(linha.get("Data_Entrada"))
+                    linha["Data_Ultimo_Envio"] = formatar_data_para_br(linha.get("Data_Ultimo_Envio"))
                     linha["_linha_planilha"] = index
                     linha["_id_supabase"] = None
                     linha["_origem"] = "sheets"
@@ -153,26 +184,36 @@ def atualizar_status_lead(linha_planilha: int = None, fase: str = None, msg_id: 
     # 2. Atualiza no Google Sheets (Paridade Documental)
     try:
         aba = obter_aba_crm()
+        if not linha_sheet and lead:
+            tel_alvo = limpar_telefone(lead.get("Telefone", ""))
+            curso_alvo = str(lead.get("Curso_Interesse", "")).strip().lower()
+            for idx, r in enumerate(aba.get_all_records(), start=2):
+                tel_r = limpar_telefone(r.get("Telefone", ""))
+                curso_r = str(r.get("Curso_Interesse", "")).strip().lower()
+                if tel_r == tel_alvo and curso_r == curso_alvo:
+                    linha_sheet = idx
+                    break
+
         if linha_sheet:
-            aba.update_cell(linha_sheet, 5, "Em Cadência")
-            aba.update_cell(linha_sheet, 6, fase)
-            aba.update_cell(linha_sheet, 7, data_hoje_br)
-            aba.update_cell(linha_sheet, 8, msg_id)
+            aba.update(
+                range_name=f"E{linha_sheet}:H{linha_sheet}",
+                values=[["Em Cadência", fase, data_hoje_br, msg_id]]
+            )
             print(f"  [Sheets] Linha {linha_sheet} atualizada com sucesso: Fase={fase}, Data={data_hoje_br}")
         elif lead:
-            # Se a linha física não estava mapeada, adiciona ou atualiza por telefone
-            nova_linha = [
+            linha_vazia = obter_primeira_linha_vazia(aba)
+            nova_linha = [[
                 lead.get("Data_Entrada", data_hoje_br),
                 lead.get("Nome_Lead", ""),
-                lead.get("Telefone", ""),
+                limpar_telefone(lead.get("Telefone", "")),
                 lead.get("Curso_Interesse", ""),
                 "Em Cadência",
                 fase,
                 data_hoje_br,
                 msg_id
-            ]
-            aba.append_row(nova_linha)
-            print(f"  [Sheets] Nova linha de disparo registrada na planilha.")
+            ]]
+            aba.update(range_name=f"A{linha_vazia}:H{linha_vazia}", values=nova_linha)
+            print(f"  [Sheets] Nova linha de disparo registrada na linha {linha_vazia} da planilha.")
     except Exception as e_sheet:
         print(f"  [Aviso] Erro ao atualizar linha no Google Sheets: {e_sheet}")
 
