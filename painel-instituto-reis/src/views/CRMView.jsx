@@ -8,6 +8,19 @@ import ModalNovoLead from '../components/ModalNovoLead'
 import ModalEditarLead from '../components/ModalEditarLead'
 import { alterarStatusLeadNaPlanilha, excluirLeadNaPlanilha } from '../services/sheetsSync'
 import { exportarParaCSV } from '../utils/exportCsv'
+import { useOnboarding } from '../contexts/OnboardingContext'
+
+const DEMO_LEAD = {
+  id: 'demo-lead-treino',
+  isDemo: true,
+  nome_lead: 'Carlos Silva (Exemplo de Treino)',
+  telefone: '5521987654321',
+  curso_interesse: 'Barbeiro',
+  status_funil: 'Em Cadência',
+  fase_cadencia: 'D1',
+  data_entrada: new Date().toISOString().split('T')[0],
+  data_ultimo_envio: new Date().toISOString().split('T')[0]
+}
 
 export default function CRMView() {
   const [leads, setLeads] = useState([])
@@ -20,6 +33,7 @@ export default function CRMView() {
   const [leadParaEditar, setLeadParaEditar] = useState(null)
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
+  const { isTourActive, notifySimulacao } = useOnboarding()
 
   const carregarLeads = async (silencioso = false) => {
     if (!silencioso) {
@@ -76,6 +90,16 @@ export default function CRMView() {
 
   // Atualização rápida de status do funil (Supabase + Planilha)
   const handleAlterarStatus = async (lead, novoStatus) => {
+    if (lead.isDemo || isTourActive) {
+      if (novoStatus === 'Atendimento Humano') {
+        notifySimulacao('Simulação: robô PAUSADO na hora! Agora você conversa no WhatsApp sem o robô interromper.')
+      } else if (novoStatus === 'Ganhou') {
+        notifySimulacao('Simulação: marcado como Matriculado 🏆! Próximo passo: ir em Cobrança e clicar em + Novo Aluno.')
+      } else {
+        notifySimulacao(`Simulação: status mudaria para "${novoStatus}" e os envios automáticos seriam encerrados.`)
+      }
+      return
+    }
     setProcessandoId(lead.id)
     try {
       const { error } = await supabase
@@ -104,6 +128,10 @@ export default function CRMView() {
 
   // Exclusão de Lead (Supabase + Planilha)
   const handleExcluirLead = async (lead) => {
+    if (lead.isDemo || isTourActive) {
+      notifySimulacao('Simulação: no uso real, remove o lead do painel e apaga a linha da aba CRM_Vendas da planilha.')
+      return
+    }
     const confirmou = window.confirm(
       `Deseja realmente excluir o lead "${lead.nome_lead}"?\n\nEsta ação removerá o lead tanto do painel quanto da aba CRM_Vendas da planilha permanentemente.`
     )
@@ -292,7 +320,14 @@ export default function CRMView() {
           </button>
 
           <button
-            onClick={() => setModalAberto(true)}
+            data-tour="crm-btn-novo"
+            onClick={() => {
+              if (isTourActive) {
+                notifySimulacao('Simulação: aqui abre o formulário para cadastrar um novo interessado no CRM!')
+                return
+              }
+              setModalAberto(true)
+            }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-bold shadow-lg shadow-brand-600/30 flex items-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
           >
             <UserPlus className="w-4 h-4" />
@@ -303,7 +338,10 @@ export default function CRMView() {
 
       {/* ABAS DO FUNIL DE VENDAS */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
+        <div
+          data-tour="crm-abas-funil"
+          className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none"
+        >
           {[
             { id: 'todos', label: 'Todos', count: contadores.todos },
             { id: 'Novo', label: 'Novos (D1)', count: contadores['Novo'], color: 'text-blue-400' },
@@ -362,12 +400,12 @@ export default function CRMView() {
       </div>
 
       {/* LISTAGEM DE LEADS */}
-      {loading ? (
+      {loading && !isTourActive ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <p className="text-sm text-slate-400">Carregando funil comercial...</p>
         </div>
-      ) : leadsFiltrados.length === 0 ? (
+      ) : !isTourActive && leadsFiltrados.length === 0 ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <UserPlus className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-white">Nenhum lead nesta fase</h3>
@@ -377,7 +415,7 @@ export default function CRMView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leadsFiltrados.map((lead) => {
+          {(isTourActive ? [DEMO_LEAD, ...leadsFiltrados] : leadsFiltrados).map((lead) => {
             const telLimpo = lead.telefone?.replace(/\D/g, '')
             const msgWhats = encodeURIComponent(
               `Olá, ${lead.nome_lead.split(' ')[0]}! Tudo bem? Sou da equipe do Instituto Reis sobre o curso de ${lead.curso_interesse}.`
@@ -391,10 +429,17 @@ export default function CRMView() {
             return (
               <div 
                 key={lead.id}
-                className="glass-card rounded-2xl p-5 border border-white/5 flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5"
+                className={`glass-card rounded-2xl p-5 border flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5 ${
+                  lead.isDemo ? 'border-amber-500/40 bg-amber-500/5' : 'border-white/5'
+                }`}
               >
                 {/* Topo do Card */}
                 <div>
+                  {lead.isDemo && (
+                    <div className="mb-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold uppercase tracking-wider">
+                      🎓 Exemplo de Treino
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-slate-800 text-brand-400 border border-brand-500/20">
                       {lead.curso_interesse}
@@ -453,6 +498,7 @@ export default function CRMView() {
                   {/* Botão de Assumir Atendimento (Stop Rule do Robô) */}
                   {!isHumano && !isGanhou && !isPerdeu && (
                     <button
+                      data-tour={lead.isDemo ? 'crm-btn-assumir' : undefined}
                       onClick={() => handleAlterarStatus(lead, 'Atendimento Humano')}
                       disabled={processandoId === lead.id}
                       className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-purple-600/20"
@@ -474,9 +520,16 @@ export default function CRMView() {
                     </button>
 
                     <a
-                      href={linkWhatsApp}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      data-tour={lead.isDemo ? 'crm-btn-whatsapp' : undefined}
+                      href={lead.isDemo ? '#treino-whatsapp' : linkWhatsApp}
+                      target={lead.isDemo ? undefined : '_blank'}
+                      rel={lead.isDemo ? undefined : 'noopener noreferrer'}
+                      onClick={(e) => {
+                        if (lead.isDemo || isTourActive) {
+                          e.preventDefault()
+                          notifySimulacao('Simulação: no uso real, abre o WhatsApp com mensagem pronta citando o nome e o curso!')
+                        }
+                      }}
                       className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 border border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
@@ -485,6 +538,7 @@ export default function CRMView() {
 
                     {!isGanhou && (
                       <button
+                        data-tour={lead.isDemo ? 'crm-btn-ganhou' : undefined}
                         onClick={() => handleAlterarStatus(lead, 'Ganhou')}
                         disabled={processandoId === lead.id}
                         className="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
@@ -496,6 +550,7 @@ export default function CRMView() {
 
                     {!isPerdeu && (
                       <button
+                        data-tour={lead.isDemo ? 'crm-btn-perdeu' : undefined}
                         onClick={() => handleAlterarStatus(lead, 'Perdeu')}
                         disabled={processandoId === lead.id}
                         className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 text-xs font-bold transition-all cursor-pointer"

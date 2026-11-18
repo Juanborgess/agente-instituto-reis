@@ -9,6 +9,19 @@ import ModalNovoAluno from '../components/ModalNovoAluno'
 import ModalEditarAluno from '../components/ModalEditarAluno'
 import { marcarPagoNaPlanilha } from '../services/sheetsSync'
 import { exportarParaCSV } from '../utils/exportCsv'
+import { useOnboarding } from '../contexts/OnboardingContext'
+
+const DEMO_ALUNO = {
+  id: 'demo-aluno-treino',
+  isDemo: true,
+  nome_aluno: 'Maria Oliveira (Exemplo de Treino)',
+  telefone_whatsapp: '5521999990000',
+  curso: 'Barbeiro',
+  vencimento_atual: new Date().toISOString().split('T')[0],
+  status_pagamento: 'PENDENTE',
+  valor_parcela: 150,
+  parcela_atual: '1/6'
+}
 
 export default function CobrancaView() {
   const [alunos, setAlunos] = useState([])
@@ -23,6 +36,18 @@ export default function CobrancaView() {
   // Modais
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [alunoParaEditar, setAlunoParaEditar] = useState(null)
+  const { isTourActive, demoModal, notifySimulacao } = useOnboarding()
+
+  // Abre/fecha automaticamente o modal do aluno de exemplo quando o tour entra nos passos do modal
+  useEffect(() => {
+    if (isTourActive && demoModal === 'cobranca-edit') {
+      setAlunoParaEditar(DEMO_ALUNO)
+    } else if (isTourActive && demoModal !== 'cobranca-edit') {
+      setAlunoParaEditar((prev) => (prev?.isDemo ? null : prev))
+    } else if (!isTourActive) {
+      setAlunoParaEditar((prev) => (prev?.isDemo ? null : prev))
+    }
+  }, [isTourActive, demoModal])
 
   const carregarAlunos = async (silencioso = false) => {
     // Só exibe spinner de tela inteira se a lista estiver completamente vazia e não for silencioso
@@ -95,6 +120,10 @@ export default function CobrancaView() {
 
   // Ação de Marcar como Pago (1 clique com update otimista)
   const handleMarcarComoPago = async (aluno) => {
+    if (aluno.isDemo || isTourActive) {
+      notifySimulacao(`Simulação: "${aluno.nome_aluno.split(' ')[0]}" seria marcado como PAGO e o robô pararia as cobranças deste mês!`)
+      return
+    }
     setProcessandoId(aluno.id)
     try {
       const { error } = await supabase
@@ -283,10 +312,18 @@ export default function CobrancaView() {
         isOpen={!!alunoParaEditar}
         onClose={() => setAlunoParaEditar(null)}
         onAlunoAtualizado={(atualizado) => {
+          if (atualizado.isDemo) {
+            notifySimulacao('Simulação: alterações e nova parcela salvas com segurança no Modo Treino!')
+            return
+          }
           setAlunos(prev => prev.map(a => a.id === atualizado.id ? atualizado : a))
           mostrarToast(`Dados de ${atualizado.nome_aluno} atualizados com sucesso!`)
         }}
         onAlunoExcluido={(idExcluido) => {
+          if (idExcluido === DEMO_ALUNO.id) {
+            notifySimulacao('Simulação: no uso real, o aluno sairia do painel e a linha da planilha seria apagada.')
+            return
+          }
           setAlunos(prev => prev.filter(a => a.id !== idExcluido))
           mostrarToast("Aluno excluído com sucesso do painel e da planilha!")
         }}
@@ -308,6 +345,7 @@ export default function CobrancaView() {
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
+            data-tour="cobranca-btn-exportar"
             onClick={handleExportarAlunos}
             className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold"
             title="Exportar listagem filtrada para Excel / CSV"
@@ -326,7 +364,14 @@ export default function CobrancaView() {
           </button>
 
           <button
-            onClick={() => setModalNovoAberto(true)}
+            data-tour="cobranca-btn-novo"
+            onClick={() => {
+              if (isTourActive) {
+                notifySimulacao('Simulação: aqui abre o formulário para cadastrar um novo aluno ou criar curso novo!')
+                return
+              }
+              setModalNovoAberto(true)
+            }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-bold shadow-lg shadow-brand-600/30 flex items-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
           >
             <UserPlus className="w-4 h-4" />
@@ -336,7 +381,7 @@ export default function CobrancaView() {
       </div>
 
       {/* CARDS DE RESUMO RÁPIDO */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div data-tour="cobranca-cards-resumo" className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div 
           onClick={() => setFiltroAba('hoje')}
           className={`glass-card p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
@@ -471,12 +516,12 @@ export default function CobrancaView() {
       </div>
 
       {/* LISTAGEM DE ALUNOS */}
-      {loading ? (
+      {loading && !isTourActive ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <p className="text-sm text-slate-400">Carregando carteira de alunos...</p>
         </div>
-      ) : alunosFiltrados.length === 0 ? (
+      ) : !isTourActive && alunosFiltrados.length === 0 ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <CheckCircle2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-white">Nenhum aluno encontrado</h3>
@@ -486,7 +531,7 @@ export default function CobrancaView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {alunosFiltrados.map((aluno) => {
+          {(isTourActive ? [DEMO_ALUNO, ...alunosFiltrados] : alunosFiltrados).map((aluno) => {
             const st = String(aluno.status_pagamento || '').toUpperCase()
             const isPagoOuConcluido = st.includes('CONCLU') || st.includes('PAGO')
             const isDesistiu = st.includes('DESIST')
@@ -501,10 +546,18 @@ export default function CobrancaView() {
             return (
               <div 
                 key={aluno.id}
-                className="glass-card rounded-2xl p-5 border border-white/5 flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5"
+                data-tour={aluno.isDemo ? 'cobranca-card-demo' : undefined}
+                className={`glass-card rounded-2xl p-5 border flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5 ${
+                  aluno.isDemo ? 'border-amber-500/40 bg-amber-500/5' : 'border-white/5'
+                }`}
               >
                 {/* Topo do Card */}
                 <div>
+                  {aluno.isDemo && (
+                    <div className="mb-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold uppercase tracking-wider">
+                      🎓 Exemplo de Treino
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${getCorCurso(aluno.curso)}`}>
                       {aluno.curso}
@@ -571,6 +624,7 @@ export default function CobrancaView() {
                 <div className="pt-3 border-t border-white/5 flex items-center gap-2">
                   {/* Botão de Editar */}
                   <button
+                    data-tour={aluno.isDemo ? 'cobranca-btn-editar' : undefined}
                     onClick={() => setAlunoParaEditar(aluno)}
                     className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 transition-all flex items-center justify-center cursor-pointer"
                     title="Editar Dados e Vencimento"
@@ -581,6 +635,7 @@ export default function CobrancaView() {
                   {/* Botão Marcar como Pago */}
                   {!isPagoOuConcluido && !isDesistiu ? (
                     <button
+                      data-tour={aluno.isDemo ? 'cobranca-btn-pagar' : undefined}
                       onClick={() => handleMarcarComoPago(aluno)}
                       disabled={processandoId === aluno.id}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-50"
@@ -602,9 +657,16 @@ export default function CobrancaView() {
 
                   {/* Botão WhatsApp */}
                   <a
-                    href={linkWhatsApp}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    data-tour={aluno.isDemo ? 'cobranca-btn-whatsapp' : undefined}
+                    href={aluno.isDemo ? '#treino-whatsapp' : linkWhatsApp}
+                    target={aluno.isDemo ? undefined : '_blank'}
+                    rel={aluno.isDemo ? undefined : 'noopener noreferrer'}
+                    onClick={(e) => {
+                      if (aluno.isDemo || isTourActive) {
+                        e.preventDefault()
+                        notifySimulacao('Simulação: no uso real, abre a conversa no WhatsApp sem precisar salvar na agenda!')
+                      }
+                    }}
                     title="Conversar no WhatsApp"
                     className="p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 border border-white/10 transition-all flex items-center justify-center cursor-pointer"
                   >

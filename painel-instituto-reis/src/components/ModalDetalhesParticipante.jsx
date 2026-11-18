@@ -24,6 +24,11 @@ export default function ModalDetalhesParticipante({
   const linkWhatsApp = `https://wa.me/${telFormatado}?text=${msgWhats}`
 
   const handleTransferirCRM = async () => {
+    if (participante.isDemo) {
+      if (onEnviarParaCRM) onEnviarParaCRM(participante)
+      return
+    }
+
     try {
       const dataHojeIso = new Date().toISOString().split('T')[0]
       const { error } = await supabase
@@ -210,9 +215,12 @@ export default function ModalDetalhesParticipante({
         <div className="pt-6 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <a
-              href={linkWhatsApp}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={participante.isDemo ? '#treino-whatsapp' : linkWhatsApp}
+              target={participante.isDemo ? undefined : '_blank'}
+              rel={participante.isDemo ? undefined : 'noopener noreferrer'}
+              onClick={(e) => {
+                if (participante.isDemo) e.preventDefault()
+              }}
               className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
             >
               <MessageCircle className="w-4 h-4" />
@@ -234,6 +242,7 @@ export default function ModalDetalhesParticipante({
 
           {!participante.enviado_crm ? (
             <button
+              data-tour="modal-sorteio-crm"
               onClick={handleTransferirCRM}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-brand-600/20 active:scale-[0.98]"
             >

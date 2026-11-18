@@ -113,6 +113,13 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
       updated_at: new Date().toISOString()
     }
 
+    if (aluno.isDemo) {
+      if (onAlunoAtualizado) onAlunoAtualizado({ ...aluno, ...dadosAtualizados })
+      setLoading(false)
+      onClose()
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('alunos_cobranca')
@@ -192,6 +199,12 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
   }
 
   const handleExcluir = async () => {
+    if (aluno.isDemo) {
+      if (onAlunoExcluido) onAlunoExcluido(aluno.id)
+      onClose()
+      return
+    }
+
     const confirmou = window.confirm(
       `Deseja realmente excluir o aluno "${aluno.nome_aluno}"?\n\nEsta ação removerá o aluno tanto do painel quanto da planilha Google Sheets permanentemente.`
     )
@@ -375,6 +388,7 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
             {/* Botão de Avançar Próxima Parcela */}
             <button
               type="button"
+              data-tour="modal-aluno-renovar"
               onClick={handleAvancarParcela}
               className="w-full py-2 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
               title="Avança 1 mês no vencimento e incrementa a parcela atual (ex: 1/6 para 2/6)"
@@ -430,6 +444,7 @@ export default function ModalEditarAluno({ aluno, isOpen, onClose, onAlunoAtuali
             {/* Botão de Excluir Aluno */}
             <button
               type="button"
+              data-tour="modal-aluno-excluir"
               onClick={handleExcluir}
               disabled={loading || excluindo}
               className="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"

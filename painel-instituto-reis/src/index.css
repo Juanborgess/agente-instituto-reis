@@ -7,7 +7,7 @@
     border-color: rgba(255, 255, 255, 0.08);
   }
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   body {
     background-color: #090d16;
@@ -15,7 +15,7 @@
     min-height: 100vh;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BadgeDollarSign, Users, LogOut, Sparkles, Trophy, Download, Smartphone } from 'lucide-react'
+import { BadgeDollarSign, Users, LogOut, Sparkles, Trophy, Download, Smartphone, GraduationCap } from 'lucide-react'
 import ModalInstalarApp from './ModalInstalarApp'
 
 export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, countCobranca, countCRM, countSorteio }) {
@@ -60,7 +60,10 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
           </div>
 
           {/* Abas de Navegação (Desktop) */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-2xl border border-white/5 shrink-0">
+          <nav
+            data-tour="nav-tabs"
+            className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-2xl border border-white/5 shrink-0"
+          >
             <button
               onClick={() => setActiveTab('cobranca')}
               className={`flex items-center gap-2 px-2.5 lg:px-3.5 py-2 rounded-xl text-xs lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
@@ -117,12 +120,26 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab('onboarding')}
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                activeTab === 'onboarding'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+              title="Manual Interativo, Rotina Diária e Tour do Sistema"
+            >
+              <GraduationCap className="w-4 h-4 text-amber-300 shrink-0" />
+              <span>Guia</span>
+            </button>
           </nav>
 
           {/* Usuário, Instalação PWA e Logout */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Botão Instalar Aplicativo (Desktop & Tablets) */}
             <button
+              data-tour="btn-instalar-app"
               onClick={() => setIsModalInstalarOpen(true)}
               title="Instalar Aplicativo Oficial no seu Computador ou Celular"
               className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer border border-emerald-300/40 active:scale-95"
@@ -151,7 +168,10 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
       </header>
 
       {/* BOTTOM NAVIGATION (MOBILE APENAS - 4 COLUNAS: COBRANÇA, CRM, SORTEIO E INSTALAR) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe px-safe">
+      <div
+        data-tour="nav-tabs"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 pb-safe px-safe"
+      >
         <div className="grid grid-cols-4 h-16">
           <button
             onClick={() => setActiveTab('cobranca')}
@@ -194,6 +214,7 @@ export default function Navbar({ activeTab, setActiveTab, onLogout, userEmail, c
 
           {/* 4ª Aba: Instalar Aplicativo no Celular */}
           <button
+            data-tour="btn-instalar-app"
             onClick={() => setIsModalInstalarOpen(true)}
             className="flex flex-col items-center justify-center gap-1 relative text-emerald-400 font-bold transition-all duration-200 cursor-pointer active:scale-95"
           >

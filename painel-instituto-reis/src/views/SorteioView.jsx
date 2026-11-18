@@ -9,6 +9,30 @@ import ModalDetalhesParticipante from '../components/ModalDetalhesParticipante'
 import ModalSorteador from '../components/ModalSorteador'
 import { exportarParaCSV } from '../utils/exportCsv'
 import { excluirParticipanteSorteioNaPlanilha } from '../services/sheetsSync'
+import { useOnboarding } from '../contexts/OnboardingContext'
+
+const DEMO_PARTICIPANTE = {
+  id: 'demo-sorteio-treino',
+  isDemo: true,
+  numero_participante: 999,
+  nome_completo: 'Ana Paula Costa (Exemplo de Treino)',
+  whatsapp: '5521988887777',
+  idade: '26',
+  bairro: 'Centro',
+  email: 'ana.treino@exemplo.com',
+  curso_interesse: 'Sobrancelha',
+  sorteado: true,
+  enviado_crm: false,
+  impedimento: 'Falta de Dinheiro',
+  contato_anterior: 'Já acompanho pelas redes sociais',
+  conhecimento: 'Iniciante',
+  trabalha: 'Sim',
+  area_atual: 'Atendimento em loja',
+  objetivo_meses: 'Ter renda extra atendendo no bairro',
+  objetivo_profissional: 'Abrir meu próprio studio em até 1 ano',
+  o_que_mudaria: 'Conquistar independência financeira e mais tempo com minha família',
+  data_hora: 'Exemplo de Treino'
+}
 
 export default function SorteioView() {
   const [participantes, setParticipantes] = useState([])
@@ -20,6 +44,18 @@ export default function SorteioView() {
   const [modalSorteadorAberto, setModalSorteadorAberto] = useState(false)
   const [processandoId, setProcessandoId] = useState(null)
   const [toastMsg, setToastMsg] = useState('')
+  const { isTourActive, demoModal, notifySimulacao } = useOnboarding()
+
+  // Abre/fecha automaticamente o Raio-X do participante de treino nos passos de modal
+  useEffect(() => {
+    if (isTourActive && demoModal === 'sorteio-details') {
+      setParticipanteSelecionado(DEMO_PARTICIPANTE)
+    } else if (isTourActive && demoModal !== 'sorteio-details') {
+      setParticipanteSelecionado((prev) => (prev?.isDemo ? null : prev))
+    } else if (!isTourActive) {
+      setParticipanteSelecionado((prev) => (prev?.isDemo ? null : prev))
+    }
+  }, [isTourActive, demoModal])
 
   const carregarParticipantes = async (silencioso = false) => {
     if (!silencioso) {
@@ -141,6 +177,10 @@ export default function SorteioView() {
 
   // Desmarcar ou marcar participante específico como sorteado
   const handleToggleSorteado = async (participante) => {
+    if (participante.isDemo || isTourActive) {
+      notifySimulacao('Simulação: clicando aqui você desmarca um sorteado de teste para ele voltar a concorrer!')
+      return
+    }
     const novoStatus = !participante.sorteado
     const msg = novoStatus
       ? `Deseja marcar #${participante.numero_participante} ${participante.nome_completo} como SORTEADO?`
@@ -167,6 +207,10 @@ export default function SorteioView() {
 
   // Zerar todos os sorteados para recomeçar o sorteio do zero
   const handleResetarSorteioCompleto = async () => {
+    if (isTourActive) {
+      notifySimulacao('Simulação: zera o status de todos os sorteados para começar um novo sorteio limpo!')
+      return
+    }
     if (totalSorteados === 0) {
       mostrarToast('Nenhum participante está marcado como sorteado.')
       return
@@ -232,6 +276,10 @@ export default function SorteioView() {
 
   // Exclusão de participante do sorteio (Supabase + Planilha)
   const handleExcluirParticipante = async (participante) => {
+    if (participante.isDemo || isTourActive) {
+      notifySimulacao('Simulação: no uso real, apaga na hora do painel e remove a linha física da aba Sorteio_QR_Code!')
+      return
+    }
     const confirmou = window.confirm(
       `Deseja realmente excluir o participante #${participante.numero_participante} (${participante.nome_completo})?\n\nEsta ação removerá o participante tanto do painel quanto da planilha Sorteio_QR_Code permanentemente.`
     )
@@ -284,6 +332,10 @@ export default function SorteioView() {
         onToggleSorteado={(p) => handleToggleSorteado(p)}
         onExcluirParticipante={(p) => handleExcluirParticipante(p)}
         onEnviarParaCRM={(p) => {
+          if (p.isDemo || isTourActive) {
+            notifySimulacao('Simulação: em 1 toque o participante seria copiado para a aba CRM de Vendas!')
+            return
+          }
           setParticipantes(prev => prev.map(item => item.id === p.id ? { ...item, enviado_crm: true } : item))
           mostrarToast(`Participante ${p.nome_completo} enviado ao CRM com sucesso!`)
           setParticipanteSelecionado(null)
@@ -353,7 +405,14 @@ export default function SorteioView() {
           </button>
 
           <button
-            onClick={() => setModalSorteadorAberto(true)}
+            data-tour="sorteio-btn-sortear"
+            onClick={() => {
+              if (isTourActive) {
+                notifySimulacao('Simulação: aqui abre a Roleta Oficial de 3,5 segundos ao vivo com filtro por curso!')
+                return
+              }
+              setModalSorteadorAberto(true)
+            }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white text-xs font-black shadow-lg shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
           >
             <Trophy className="w-4 h-4 text-white" />
@@ -363,7 +422,7 @@ export default function SorteioView() {
       </div>
 
       {/* CARDS DE MÉTRICAS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div data-tour="sorteio-metricas" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="glass-card rounded-2xl p-4 border border-white/5 space-y-1">
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
             Total Participantes
@@ -448,12 +507,12 @@ export default function SorteioView() {
       </div>
 
       {/* LISTA DE PARTICIPANTES */}
-      {loading ? (
+      {loading && !isTourActive ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <p className="text-sm text-slate-400">Carregando participantes do sorteio...</p>
         </div>
-      ) : participantesFiltrados.length === 0 ? (
+      ) : !isTourActive && participantesFiltrados.length === 0 ? (
         <div className="glass-panel rounded-3xl p-12 text-center">
           <Trophy className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-white">Nenhum participante encontrado</h3>
@@ -463,7 +522,7 @@ export default function SorteioView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {participantesFiltrados.map((p) => {
+          {(isTourActive ? [DEMO_PARTICIPANTE, ...participantesFiltrados] : participantesFiltrados).map((p) => {
             const telLimpo = String(p.whatsapp || '').replace(/\D/g, '')
             const msgWhats = encodeURIComponent(
               `Olá, ${p.nome_completo.split(' ')[0]}! Tudo bem? Sou da equipe do Instituto Reis sobre o sorteio do curso de ${p.curso_interesse}.`
@@ -473,9 +532,16 @@ export default function SorteioView() {
             return (
               <div
                 key={p.id}
-                className="glass-card rounded-2xl p-5 border border-white/5 flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5"
+                className={`glass-card rounded-2xl p-5 border flex flex-col justify-between gap-4 transition-all duration-200 hover:-translate-y-0.5 ${
+                  p.isDemo ? 'border-amber-500/40 bg-amber-500/5' : 'border-white/5'
+                }`}
               >
                 <div>
+                  {p.isDemo && (
+                    <div className="mb-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold uppercase tracking-wider">
+                      🎓 Exemplo de Treino
+                    </div>
+                  )}
                   {/* Topo do Card: Número do Sorteio e Curso */}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
@@ -490,6 +556,7 @@ export default function SorteioView() {
                     {p.sorteado ? (
                       <button
                         type="button"
+                        data-tour={p.isDemo ? 'sorteio-badge-sorteado' : undefined}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleToggleSorteado(p)
@@ -538,6 +605,7 @@ export default function SorteioView() {
                 {/* BOTÕES DE AÇÃO */}
                 <div className="pt-3 border-t border-white/5 flex items-center gap-2">
                   <button
+                    data-tour={p.isDemo ? 'sorteio-btn-ver-respostas' : undefined}
                     onClick={() => setParticipanteSelecionado(p)}
                     className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
@@ -546,9 +614,15 @@ export default function SorteioView() {
                   </button>
 
                   <a
-                    href={linkWhatsApp}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={p.isDemo ? '#treino-whatsapp' : linkWhatsApp}
+                    target={p.isDemo ? undefined : '_blank'}
+                    rel={p.isDemo ? undefined : 'noopener noreferrer'}
+                    onClick={(e) => {
+                      if (p.isDemo || isTourActive) {
+                        e.preventDefault()
+                        notifySimulacao('Simulação: no uso real, abre o WhatsApp do participante!')
+                      }
+                    }}
                     className="p-2 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 border border-white/10 text-xs font-bold transition-all flex items-center justify-center cursor-pointer"
                     title="Conversar no WhatsApp"
                   >

@@ -5,6 +5,10 @@ import Navbar from './components/Navbar'
 import CobrancaView from './views/CobrancaView'
 import CRMView from './views/CRMView'
 import SorteioView from './views/SorteioView'
+import OnboardingView from './views/OnboardingView'
+import { OnboardingProvider } from './contexts/OnboardingContext'
+import TourOverlay from './components/onboarding/TourOverlay'
+import OnboardingLauncher from './components/onboarding/OnboardingLauncher'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -50,25 +54,33 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-slate-950 via-[#0b101b] to-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
-      {/* Navegação Superior & Mobile */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={handleLogout}
-        userEmail={session.user?.email || 'Recepção'}
-      />
+    <OnboardingProvider activeTab={activeTab} setActiveTab={setActiveTab}>
+      <div className="min-h-[100dvh] bg-gradient-to-b from-slate-950 via-[#0b101b] to-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
+        {/* Navegação Superior & Mobile */}
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+          userEmail={session.user?.email || 'Recepção'}
+        />
 
-      {/* Conteúdo Principal da Aba Selecionada */}
-      <main className="flex-1 w-full animate-fadeIn px-safe pb-nav-safe md:pb-8">
-        {activeTab === 'cobranca' ? (
-          <CobrancaView />
-        ) : activeTab === 'crm' ? (
-          <CRMView />
-        ) : (
-          <SorteioView />
-        )}
-      </main>
-    </div>
+        {/* Conteúdo Principal da Aba Selecionada */}
+        <main className="flex-1 w-full animate-fadeIn px-safe pb-nav-safe md:pb-8">
+          {activeTab === 'cobranca' ? (
+            <CobrancaView />
+          ) : activeTab === 'crm' ? (
+            <CRMView />
+          ) : activeTab === 'sorteio' ? (
+            <SorteioView />
+          ) : (
+            <OnboardingView setActiveTab={setActiveTab} />
+          )}
+        </main>
+
+        {/* Botão de Onboarding no Canto + Motor de Tour Interativo */}
+        <OnboardingLauncher activeTab={activeTab} setActiveTab={setActiveTab} />
+        <TourOverlay />
+      </div>
+    </OnboardingProvider>
   )
 }
