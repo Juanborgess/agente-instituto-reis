@@ -24,6 +24,7 @@ import {
   TRILHAS_TOUR,
   MENSAGENS_ROBO_CRM,
   REGUA_COBRANCA,
+  REGRAS_DISPARO_ROBOS,
   ROTINA_DIARIA,
   CURSOS_PADRAO_MANUAL,
   FAQ_ITENS
@@ -131,7 +132,7 @@ export default function OnboardingView({ setActiveTab }) {
         {[
           { id: 'roteiro', label: 'Passo a Passo & Dicas', icon: BookOpen },
           { id: 'rotina', label: `Rotina Diária (${totalMarcados}/${totalChecklist})`, icon: Clock },
-          { id: 'robos', label: 'Mensagens dos Robôs', icon: MessageSquare },
+          { id: 'robos', label: 'Mensagens & Quando Dispara', icon: MessageSquare },
           { id: 'faq', label: 'Dúvidas Frequentes (FAQ)', icon: HelpCircle }
         ].map((tab) => {
           const Icon = tab.icon
@@ -312,19 +313,52 @@ export default function OnboardingView({ setActiveTab }) {
 
       {secaoAtiva === 'robos' && (
         <div className="space-y-6">
+          {/* Regras Gerais de Disparo (Travas de Segurança) */}
+          <div className="glass-panel rounded-2xl p-5 border border-brand-500/25 bg-brand-500/5 space-y-3">
+            <div className="flex items-center gap-2 text-brand-300 font-extrabold text-sm">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>Regras de Segurança: Quando os Robôs Enviam e Quando Param</span>
+            </div>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {REGRAS_DISPARO_ROBOS.map((regra, idx) => (
+                <li
+                  key={idx}
+                  className="p-3 rounded-xl bg-slate-900/70 border border-white/5 text-xs text-slate-200 leading-relaxed flex items-start gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{regra}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Régua de Cobrança */}
           <div className="space-y-3">
-            <h3 className="text-base font-extrabold text-white">
-              Como o Robô de Cobrança Preventiva trabalha sozinho
-            </h3>
+            <div>
+              <h3 className="text-base font-extrabold text-white">
+                1. Robô de Cobrança Preventiva — Quando Dispara e O Que Envia
+              </h3>
+              <p className="text-xs text-slate-400">
+                Ele olha todos os dias a data de vencimento de cada aluno pendente e escolhe o modelo exato:
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {REGUA_COBRANCA.map((item) => (
-                <div key={item.momento} className={`rounded-2xl p-4 border ${item.cor} space-y-1`}>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider block">
-                    {item.momento}
-                  </span>
-                  <h4 className="text-sm font-bold text-white">{item.titulo}</h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">{item.descricao}</p>
+                <div key={item.momento} className={`rounded-2xl p-4 border ${item.cor} flex flex-col justify-between gap-2.5`}>
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider block">
+                      {item.momento}
+                    </span>
+                    <h4 className="text-sm font-bold text-white">{item.titulo}</h4>
+                    <div className="px-2.5 py-1.5 rounded-lg bg-slate-950/60 border border-white/10 text-[11px] font-semibold text-slate-200 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                      <span>{item.quandoDispara}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-xs text-slate-300 leading-relaxed pt-1 border-t border-white/10">
+                    <p><strong className="text-white">O que envia:</strong> {item.oQueEnvia}</p>
+                    <p className="text-[11px] text-slate-400">{item.descricao}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -335,10 +369,10 @@ export default function OnboardingView({ setActiveTab }) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-extrabold text-white">
-                  Mensagens EXATAS que o Robô de Vendas envia no WhatsApp
+                  2. Robô do CRM de Vendas — Quando Manda Cada Mensagem (D+1, D+4, D+7)
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Disparadas automaticamente durante 7 dias se o lead ainda não respondeu (e pausam na hora quando você clica em Assumir Atendimento)
+                  A contagem começa a partir da <strong>Data de Entrada</strong> do lead. Se o lead responder e você clicar em <strong>Assumir Atendimento</strong>, os próximos disparos são cancelados na hora.
                 </p>
               </div>
             </div>
@@ -370,7 +404,21 @@ export default function OnboardingView({ setActiveTab }) {
                       </button>
                     </div>
 
-                    <h4 className="text-xs font-bold text-white">{msg.titulo}</h4>
+                    <h4 className="text-sm font-bold text-white">{msg.titulo}</h4>
+
+                    {/* Quando dispara e Condição */}
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-white/10 space-y-1.5 text-[11px]">
+                      <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>Quando manda: {msg.quandoDispara}</span>
+                      </div>
+                      <p className="text-slate-300 leading-snug">
+                        <strong className="text-slate-100">Condição:</strong> {msg.condicao}
+                      </p>
+                      <p className="text-emerald-300 leading-snug">
+                        <strong className="text-emerald-200">Depois do envio:</strong> {msg.aposEnvio}
+                      </p>
+                    </div>
 
                     <div className="p-3.5 rounded-xl bg-slate-950/70 border border-white/10 text-xs text-slate-100 leading-relaxed italic selectable-text">
                       &ldquo;{msg.texto}&rdquo;

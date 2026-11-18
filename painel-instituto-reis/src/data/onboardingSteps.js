@@ -75,10 +75,21 @@ export const TOUR_STEPS = [
     trilha: 'cobranca',
     tab: 'cobranca',
     target: '[data-tour="cobranca-cards-resumo"]',
-    titulo: 'Filtros Rápidos e Robô de Cobrança',
+    titulo: 'Filtros Rápidos & Quando o Robô Cobra',
     descricao:
-      'O robô olha os vencimentos todo dia sozinho: avisa faltando 5 dias (lembrete amigável), faltando 1 dia (véspera) e no dia do vencimento (envia o PIX oficial). Alunos PAGOS, CONCLUÍDOS ou DESISTIU nunca recebem cobrança.',
-    dica: 'Comece a manhã clicando em "VENCE HOJE" para conferir os PIX que estão entrando.',
+      'Estes cartões filtram os alunos pela data de vencimento e mostram exatamente quem o robô vai notificar hoje: 5 dias antes (-5d: lembrete amigável), 1 dia antes (-1d: véspera) e no dia do vencimento (0d: envio com chave PIX).',
+    dica: 'Comece a manhã clicando em "VENCE HOJE" para conferir os PIX que estão entrando. Quem já estiver PAGO, CONCLUÍDO ou DESISTIU nunca recebe mensagem!',
+    placement: 'bottom'
+  },
+  {
+    id: 'cobranca-regra-envio',
+    trilha: 'cobranca',
+    tab: 'cobranca',
+    target: '[data-tour="cobranca-cards-resumo"]',
+    titulo: 'O que o Robô Envia em Cada Momento',
+    descricao:
+      '• Faltando 5 dias: envia lembrete com o primeiro nome do aluno para ele se programar. • Faltando 1 dia (Véspera): avisa que vence amanhã. • No dia do vencimento: envia a mensagem com a chave PIX oficial da escola. Após vencido, o robô não fica cobrando todo dia.',
+    dica: 'Você pode ver o resumo completo da régua de cobrança na aba "Guia" -> "Mensagens dos Robôs".',
     placement: 'bottom'
   },
   {
@@ -186,10 +197,20 @@ export const TOUR_STEPS = [
     trilha: 'crm',
     tab: 'crm',
     target: '[data-tour="crm-abas-funil"]',
-    titulo: 'As 5 Etapas do Funil & Cadência do Robô',
+    titulo: 'As 5 Etapas do Funil de Vendas',
     descricao:
-      '1) Novos (D1): recém-chegados. 2) Em Cadência: o robô manda mensagens automáticas profissionais em D+1, D+4 e D+7 para quem ainda não respondeu. 3) Atendimento: você assumiu. 4) Matriculados: fechou! 5) Perdidos: não quer agora.',
-    dica: 'Você pode conferir os textos exatos das mensagens D+1, D+4 e D+7 na aba "Guia & Manual".',
+      '1) Novos (D1): recém-chegados que ainda não receberam mensagem. 2) Em Cadência: o robô está fazendo o acompanhamento automático. 3) Atendimento: você assumiu e pausou o robô. 4) Matriculados: fechou! 5) Perdidos: não quer no momento.',
+    placement: 'bottom'
+  },
+  {
+    id: 'crm-regua-mensagens',
+    trilha: 'crm',
+    tab: 'crm',
+    target: '[data-tour="crm-abas-funil"]',
+    titulo: 'Quando e O Que o Robô Manda (D+1, D+4 e D+7)',
+    descricao:
+      'Contando da Data de Entrada: • D+1 (após 1 dia): pergunta se confirma o encerramento do pedido (gera urgência). • D+4 (após 4 dias, se recebeu D1): lembra que a vaga aguarda validação por tempo limitado. • D+7 (após 7 dias, se recebeu D4): último aviso de cancelamento do protocolo e encerra os disparos.',
+    dica: 'Trava de segurança: o robô envia no máximo 1 mensagem por dia e só dispara para quem ainda está em "Novo" ou "Em Cadência". Confira os textos palavra por palavra na aba "Guia" -> "Mensagens dos Robôs"!',
     placement: 'bottom'
   },
   {
@@ -296,7 +317,10 @@ export const TOUR_STEPS = [
 export const MENSAGENS_ROBO_CRM = [
   {
     fase: 'D+1',
-    titulo: 'Mensagem 1 — Disparada 1 dia após o interesse',
+    titulo: 'Mensagem 1 — Resgate Inicial (D+1)',
+    quandoDispara: 'A partir de 1 dia após a Data de Entrada',
+    condicao: 'Lead com status "Novo" e ainda sem nenhum disparo anterior (fase vazia ou vinda do Sorteio QR).',
+    aposEnvio: 'Status muda para "Em Cadência" e fase vira D1.',
     cor: 'border-blue-500/30 bg-blue-500/5',
     badgeCor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     texto:
@@ -306,7 +330,10 @@ export const MENSAGENS_ROBO_CRM = [
   },
   {
     fase: 'D+4',
-    titulo: 'Mensagem 2 — Disparada 4 dias após a entrada (se não respondeu)',
+    titulo: 'Mensagem 2 — Aviso de Reserva (D+4)',
+    quandoDispara: 'A partir de 4 dias após a Data de Entrada',
+    condicao: 'Lead em "Em Cadência", já recebeu D1 em dia anterior e ainda não respondeu para atendimento humano.',
+    aposEnvio: 'Continua em "Em Cadência" e fase atualiza para D4.',
     cor: 'border-amber-500/30 bg-amber-500/5',
     badgeCor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     texto:
@@ -316,7 +343,10 @@ export const MENSAGENS_ROBO_CRM = [
   },
   {
     fase: 'D+7',
-    titulo: 'Mensagem 3 — Disparada 7 dias após a entrada (Último Aviso)',
+    titulo: 'Mensagem 3 — Último Aviso (D+7)',
+    quandoDispara: 'A partir de 7 dias após a Data de Entrada',
+    condicao: 'Lead em "Em Cadência", já recebeu D4 em dia anterior e segue sem resposta.',
+    aposEnvio: 'Fase vira D7 e o robô encerra os disparos automáticos (não incomoda mais).',
     cor: 'border-rose-500/30 bg-rose-500/5',
     badgeCor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
     texto:
@@ -330,28 +360,44 @@ export const MENSAGENS_ROBO_CRM = [
 export const REGUA_COBRANCA = [
   {
     momento: 'Faltando 5 dias (D-5)',
+    quandoDispara: 'Exatamente 5 dias antes do vencimento',
     titulo: 'Lembrete Amigável',
-    descricao: 'Envia uma mensagem educada avisando com antecedência para o aluno se planejar.',
+    oQueEnvia: 'Mensagem oficial de pré-aviso usando o [Primeiro Nome] do aluno.',
+    descricao: 'Avisa com antecedência para o aluno se organizar financeiramente sem pressão.',
     cor: 'text-indigo-400 border-indigo-500/30 bg-indigo-500/10'
   },
   {
     momento: 'Faltando 1 dia (Véspera)',
+    quandoDispara: 'Exatamente 1 dia antes do vencimento',
     titulo: 'Aviso de Amanhã',
-    descricao: 'Lembra o aluno que a mensalidade vence no dia seguinte.',
+    oQueEnvia: 'Mensagem oficial de véspera usando o [Primeiro Nome] do aluno.',
+    descricao: 'Lembra que a mensalidade vence no dia seguinte.',
     cor: 'text-amber-400 border-amber-500/30 bg-amber-500/10'
   },
   {
-    momento: 'No Dia do Vencimento',
+    momento: 'No Dia do Vencimento (D0)',
+    quandoDispara: 'Exatamente na data do vencimento',
     titulo: 'Cobrança com Chave PIX',
-    descricao: 'Envia a mensagem com a chave PIX oficial da escola para pagamento rápido.',
+    oQueEnvia: 'Mensagem oficial do dia do vencimento com [Primeiro Nome] + Chave PIX oficial da escola.',
+    descricao: 'Facilita o pagamento na hora enviando o PIX direto no WhatsApp.',
     cor: 'text-red-400 border-red-500/30 bg-red-500/10'
   },
   {
     momento: 'PAGO / CONCLUÍDO / DESISTIU',
+    quandoDispara: 'Nunca dispara (Bloqueado)',
     titulo: 'Bloqueio Automático',
-    descricao: 'O robô NUNCA envia cobrança para quem já pagou, concluiu ou desistiu!',
+    oQueEnvia: 'Nenhum envio.',
+    descricao: 'Se você deu baixa em "Marcar Pago" ou marcou Concluído/Desistiu, o robô pula o aluno na hora.',
     cor: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
   }
+]
+
+export const REGRAS_DISPARO_ROBOS = [
+  'Máximo 1 mensagem por dia por pessoa: o robô do CRM nunca dispara duas fases no mesmo dia civil.',
+  'Ordem obrigatória D1 → D4 → D7: mesmo se um lead antigo entrar, o robô respeita a sequência passo a passo (sem pular etapas).',
+  'Pausa imediata no CRM: ao clicar em "Assumir Atendimento", "Ganhou" ou "Perdeu", o contato sai da fila do robô na hora.',
+  'Pausa imediata na Cobrança: ao clicar em "Marcar Pago" ou mudar o status para PAGO/CONCLUÍDO, o aluno não recebe mais avisos.',
+  'Intervalo anti-bloqueio: os robôs aguardam de 15 a 30 segundos entre um cliente e outro para proteger o WhatsApp oficial da escola.'
 ]
 
 // Checklist Diário do Lucas
